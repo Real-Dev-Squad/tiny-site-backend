@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -94,6 +95,7 @@ func SignInUser(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"status": "fail", "message": fmt.Sprintf("generating JWT Token failed: %v", err)})
 	}
+	Origin := os.Getenv("DOMAIN")
 
 	c.Cookie(&fiber.Cookie{
 		Name:     "token",
@@ -102,7 +104,7 @@ func SignInUser(c *fiber.Ctx) error {
 		MaxAge:   config.JwtMaxAge,
 		Secure:   false,
 		HTTPOnly: true,
-		Domain:   "localhost",
+		Domain:   Origin,
 	})
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "success", "token": tokenString})
