@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"os"
 
-	"tiny-site-backend/controllers"
 	"tiny-site-backend/initializers"
-	"tiny-site-backend/middleware"
+	"tiny-site-backend/routes"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -22,40 +21,15 @@ func init() {
 }
 
 func main() {
+	Origin := os.Getenv("DOMAIN")
 	app := fiber.New()
-	micro := fiber.New()
-
-	app.Mount("/api", micro)
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:3000",
+		AllowOrigins:     Origin,
 		AllowHeaders:     "Origin, Content-Type, Accept",
 		AllowMethods:     "GET, POST",
 		AllowCredentials: true,
 	}))
-
-	micro.Route("/auth", func(router fiber.Router) {
-		router.Post("/register", controllers.SignUpUser)
-		router.Post("/login", controllers.SignInUser)
-		router.Get("/logout", middleware.DeserializeUser, controllers.LogoutUser)
-	})
-
-	micro.Get("/users/self", middleware.DeserializeUser, controllers.GetMe)
-
-	micro.Get("/healthchecker", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"status":  "success",
-			"message": "JWT Authentication with Golang, Fiber, and GORM",
-		})
-	})
-
-	micro.All("*", func(c *fiber.Ctx) error {
-		path := c.Path()
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"status":  "fail",
-			"message": fmt.Sprintf("Path: %v does not exists on this server", path),
-		})
-	})
-
+	routes.SetupRoutes(app)
 	log.Fatal(app.Listen(":8000"))
 }
