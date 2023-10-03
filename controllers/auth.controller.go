@@ -18,16 +18,16 @@ func SignUpUser(c *fiber.Ctx) error {
 	var payload *models.SignUpInput
 
 	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": err.Error()})
 	}
 
 	errors := models.ValidateStruct(payload)
 	if errors != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "errors": errors})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "errors": errors})
 	}
 
 	if payload.Password != payload.PasswordConfirm {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": "Passwords do not match"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Passwords do not match"})
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
@@ -46,10 +46,14 @@ func SignUpUser(c *fiber.Ctx) error {
 
 	result := initializers.DB.Create(&newUser)
 
-	if result.Error != nil && strings.Contains(result.Error.Error(), "duplicate key value violates unique") {
-		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"status": "fail", "message": "User with that email already exists"})
-	} else if result.Error != nil {
-		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"status": "error", "message": "Something bad happened"})
+	if result.Error != nil {
+		errMsg := result.Error.Error()
+		if strings.Contains(errMsg, "duplicate key value violates unique constraint") {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"status": "error", "message": "User with that email already exists"})
+		} else if strings.Contains(errMsg, "record not found") {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"status": "error", "message": "Record not found"})
+		}
+		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"status": "error", "message": errMsg})
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"status": "success", "data": fiber.Map{"user": models.FilterUserRecord(&newUser)}})
@@ -59,7 +63,7 @@ func SignInUser(c *fiber.Ctx) error {
 	var payload *models.SignInInput
 
 	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": err.Error()})
 	}
 
 	errors := models.ValidateStruct(payload)
@@ -70,31 +74,29 @@ func SignInUser(c *fiber.Ctx) error {
 	var user models.User
 	result := initializers.DB.First(&user, "username = ?", payload.Username)
 	if result.Error != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": "Invalid username or Password"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Invalid username or Password"})
 	}
 
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": "Invalid username or Password"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Invalid username or Password"})
 	}
 
 	config, _ := initializers.LoadConfig(".")
 
-	tokenByte := jwt.New(jwt.SigningMethodHS256)
+	token := jwt.New(jwt.SigningMethodHS256)
 
-	now := time.Now().UTC()
-	claims := tokenByte.Claims.(jwt.MapClaims)
-
+	claims := token.Claims.(jwt.MapClaims)
 	claims["sub"] = user.ID
-	claims["exp"] = now.Add(config.JwtExpiresIn).Unix()
-	claims["iat"] = now.Unix()
-	claims["nbf"] = now.Unix()
+	claims["exp"] = time.Now().Add(config.JwtExpiresIn).Unix()
+	claims["iat"] = time.Now().Unix()
+	claims["nbf"] = time.Now().Unix()
 
-	tokenString, err := tokenByte.SignedString([]byte(config.JwtSecret))
-
+	tokenString, err := token.SignedString([]byte(config.JwtSecret))
 	if err != nil {
-		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"status": "fail", "message": fmt.Sprintf("generating JWT Token failed: %v", err)})
+		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"status": "error", "message": fmt.Sprintf("generating JWT Token failed: %v", err)})
 	}
+
 	Origin := os.Getenv("DOMAIN")
 
 	c.Cookie(&fiber.Cookie{
