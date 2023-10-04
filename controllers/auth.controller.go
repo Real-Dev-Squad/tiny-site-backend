@@ -15,20 +15,7 @@ import (
 )
 
 func SignUpUser(c *fiber.Ctx) error {
-	var payload *models.SignUpInput
-
-	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": err.Error()})
-	}
-
-	errors := models.ValidateStruct(payload)
-	if errors != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "errors": errors})
-	}
-
-	if payload.Password != payload.PasswordConfirm {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Passwords do not match"})
-	}
+	payload := c.Locals("validatedPayload").(*models.SignUpInput)
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -60,16 +47,8 @@ func SignUpUser(c *fiber.Ctx) error {
 }
 
 func SignInUser(c *fiber.Ctx) error {
-	var payload *models.SignInInput
-
-	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": err.Error()})
-	}
-
-	errors := models.ValidateStruct(payload)
-	if errors != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(errors)
-	}
+	validatedPayload := c.Locals("validatedPayload").(*models.SignInInput)
+	payload := *validatedPayload
 
 	var user models.User
 	result := initializers.DB.First(&user, "username = ?", payload.Username)

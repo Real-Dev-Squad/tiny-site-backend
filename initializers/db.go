@@ -24,7 +24,11 @@ func ConnectDB(config *Config) {
 		os.Exit(1)
 	}
 
-	DB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"")
+	if err := DB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error; err != nil {
+		log.Fatal("Failed to create uuid-ossp extension:  \n", err.Error())
+		os.Exit(1)
+	}
+
 	DB.Logger = logger.Default.LogMode(logger.Info)
 
 	log.Println("Running Migrations")
