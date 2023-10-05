@@ -37,22 +37,16 @@ func DeserializeUser(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "fail", "message": fmt.Sprintf("invalidate token: %v", err)})
 	}
-
 	claims, ok := token.Claims.(jwt.MapClaims)
-	fmt.Printf("Token String: %s\n", tokenString)
 
 	if !ok || !token.Valid {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "fail", "message": "invalid token claim"})
 	}
-	fmt.Printf("Claims: %+v\n", claims)
 
 	subClaim, ok := claims["sub"].(string)
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "fail", "message": "missing user ID in token"})
 	}
-
-	fmt.Printf("Type of 'sub' claim: %T\n", subClaim)
-	fmt.Printf("Value of 'sub' claim: %v\n", subClaim)
 
 	userID := subClaim
 	fmt.Printf("User ID from token: %s\n", userID)
