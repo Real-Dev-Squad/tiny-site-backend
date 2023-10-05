@@ -39,18 +39,28 @@ func DeserializeUser(c *fiber.Ctx) error {
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
+	fmt.Printf("Token String: %s\n", tokenString)
+
 	if !ok || !token.Valid {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "fail", "message": "invalid token claim"})
 	}
+	fmt.Printf("Claims: %+v\n", claims)
 
-	userID, ok := claims["sub"].(float64)
+	subClaim, ok := claims["sub"].(string)
 	if !ok {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "fail", "message": "invalid user ID in token"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "fail", "message": "missing user ID in token"})
 	}
 
+	fmt.Printf("Type of 'sub' claim: %T\n", subClaim)
+	fmt.Printf("Value of 'sub' claim: %v\n", subClaim)
+
+	userID := subClaim
+	fmt.Printf("User ID from token: %s\n", userID)
+
 	var user models.User
-	result := initializers.DB.First(&user, "id = ?", int(userID))
+	result := initializers.DB.First(&user, "id = ?", userID)
 	if result.Error != nil {
+		fmt.Printf("DB Query Error: %v\n", result.Error)
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "error", "message": "the user belonging to this token no longer exists"})
 	}
 
