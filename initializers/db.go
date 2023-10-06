@@ -18,20 +18,20 @@ func ConnectDB(config *Config) error {
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return fmt.Errorf("Failed to connect to the Database: %v", err)
+		return fmt.Errorf("failed to connect to the Database: %v", err)
 	}
 
 	if err := DB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error; err != nil {
-		return fmt.Errorf("Failed to create uuid-ossp extension: %v", err)
+		return fmt.Errorf("failed to create uuid-ossp extension: %v", err)
 	}
 
 	DB.Logger = logger.Default.LogMode(logger.Info)
 
 	log.Println("Running Migrations")
 	if err := DB.AutoMigrate(&models.User{}); err != nil {
-		return fmt.Errorf("Migration Failed: %v", err)
+		return fmt.Errorf("migration failed: %v", err)
 	}
 
-	log.Println("🚀 Connected Successfully to the Database")
+	log.Println("🚀 Connected successfully to the Database")
 	return nil
 }
