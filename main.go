@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -12,15 +13,15 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
-func init() {
+func main() {
 	config, err := initializers.LoadConfig(".")
 	if err != nil {
-		log.Fatalln("Failed to load environment variables! \n", err.Error())
+		log.Printf("Failed to load environment variables: %v\n", err)
+		return
 	}
-	initializers.ConnectDB(&config)
-}
 
-func main() {
+	initializers.ConnectDB(&config)
+
 	Origin := os.Getenv("DOMAIN")
 	app := fiber.New()
 	app.Use(logger.New())
@@ -31,5 +32,10 @@ func main() {
 		AllowCredentials: true,
 	}))
 	routes.SetupRoutes(app)
-	log.Fatal(app.Listen(":8000"))
+
+	port := ":8000"
+	fmt.Printf("Server listening on port %s\n", port)
+	if err := app.Listen(port); err != nil {
+		log.Printf("Error while starting the server: %v\n", err)
+	}
 }
