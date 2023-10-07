@@ -4,11 +4,11 @@ import (
 	"tiny-site-backend/controllers"
 	"tiny-site-backend/middleware"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
 )
 
-func setupAuthRoutes(router fiber.Router) {
-	router.Post("/register", middleware.ValidateSignUpInput, controllers.SignUpUser)
-	router.Post("/login", middleware.ValidateSignInInput, controllers.SignInUser)
-	router.Get("/logout", middleware.DeserializeUser, controllers.LogoutUser)
+func setupAuthRoutes(router *gin.RouterGroup) {
+	router.POST("/register", middleware.ValidateSignUpInput(), controllers.SignUpUser)
+	router.POST("/login", middleware.ValidateSignInInput(), controllers.SignInUser)
+	router.GET("/logout", middleware.DeserializeUser(), controllers.LogoutUser)
 }

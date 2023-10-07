@@ -3,10 +3,14 @@ package routes
 import (
 	"tiny-site-backend/controllers"
 	"tiny-site-backend/middleware"
+	"tiny-site-backend/models"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
 )
 
-func setupUserRoutes(router fiber.Router) {
-	router.Get("/self", middleware.DeserializeUser, controllers.GetSelf)
+func setupUserRoutes(userGroup *gin.RouterGroup) {
+	userGroup.GET("/self", middleware.DeserializeUser(), func(c *gin.Context) {
+		user := c.MustGet("user").(models.UserResponse)
+		controllers.GetSelf(c, user)
+	})
 }

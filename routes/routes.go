@@ -1,10 +1,10 @@
 package routes
 
-import "github.com/gofiber/fiber/v2"
+import "github.com/gin-gonic/gin"
 
-func SetupRoutes(app *fiber.App) {
-	authGroup := app.Group("/api/auth")
-	userGroup := app.Group("/api/users")
+func SetupRoutes(r *gin.Engine) {
+	authGroup := r.Group("/api/auth")
+	userGroup := r.Group("/api/users")
 
 	setupAuthRoutes(authGroup)
 	setupUserRoutes(userGroup)

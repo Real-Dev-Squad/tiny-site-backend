@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -9,17 +10,18 @@ import (
 	"tiny-site-backend/initializers"
 	"tiny-site-backend/models"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func SignUpUser(c *fiber.Ctx) error {
-	payload := c.Locals("validatedPayload").(*models.SignUpInput)
+func SignUpUser(c *gin.Context) {
+	payload := c.MustGet("validatedPayload").(*models.SignUpInput)
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+		c.JSON(400, gin.H{"status": "fail", "message": err.Error()})
+		return
 	}
 
 	newUser := models.User{
@@ -36,29 +38,33 @@ func SignUpUser(c *fiber.Ctx) error {
 	if result.Error != nil {
 		errMsg := result.Error.Error()
 		if strings.Contains(errMsg, "duplicate key value violates unique constraint") {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"status": "error", "message": "User with that email already exists"})
+			c.JSON(409, gin.H{"status": "error", "message": "User with that email already exists"})
 		} else if strings.Contains(errMsg, "record not found") {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"status": "error", "message": "Record not found"})
+			c.JSON(404, gin.H{"status": "error", "message": "Record not found"})
+		} else {
+			c.JSON(502, gin.H{"status": "error", "message": errMsg})
 		}
-		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"status": "error", "message": errMsg})
+		return
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"status": "success", "data": fiber.Map{"user": models.FilterUserRecord(&newUser)}})
+	c.JSON(201, gin.H{"status": "success", "data": gin.H{"user": models.FilterUserRecord(&newUser)}})
 }
 
-func SignInUser(c *fiber.Ctx) error {
-	validatedPayload := c.Locals("validatedPayload").(*models.SignInInput)
+func SignInUser(c *gin.Context) {
+	validatedPayload := c.MustGet("validatedPayload").(*models.SignInInput)
 	payload := *validatedPayload
 
 	var user models.User
 	result := initializers.DB.First(&user, "username = ?", payload.Username)
 	if result.Error != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Invalid username or Password"})
+		c.JSON(400, gin.H{"status": "error", "message": "Invalid username or Password"})
+		return
 	}
 
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Invalid username or Password"})
+		c.JSON(400, gin.H{"status": "error", "message": "Invalid username or Password"})
+		return
 	}
 
 	config, _ := initializers.LoadConfig(".")
@@ -73,30 +79,20 @@ func SignInUser(c *fiber.Ctx) error {
 
 	tokenString, err := token.SignedString([]byte(config.JwtSecret))
 	if err != nil {
-		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"status": "error", "message": fmt.Sprintf("generating JWT Token failed: %v", err)})
+		c.JSON(502, gin.H{"status": "error", "message": fmt.Sprintf("generating JWT Token failed: %v", err)})
+		return
 	}
 
 	Origin := os.Getenv("DOMAIN")
 
-	c.Cookie(&fiber.Cookie{
-		Name:     "token",
-		Value:    tokenString,
-		Path:     "/",
-		MaxAge:   config.JwtMaxAge,
-		Secure:   false,
-		HTTPOnly: true,
-		Domain:   Origin,
-	})
+	c.SetSameSite(http.SameSiteNoneMode)
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "success", "token": tokenString})
+	c.SetCookie("token", tokenString, int(config.JwtMaxAge), "/", Origin, false, true)
+
+	c.JSON(200, gin.H{"status": "success", "token": tokenString})
 }
 
-func LogoutUser(c *fiber.Ctx) error {
-	expired := time.Now().Add(-time.Hour * 24)
-	c.Cookie(&fiber.Cookie{
-		Name:    "token",
-		Value:   "",
-		Expires: expired,
-	})
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "success"})
+func LogoutUser(c *gin.Context) {
+	c.SetCookie("token", "", -1, "/", "", false, true)
+	c.JSON(200, gin.H{"status": "success"})
 }

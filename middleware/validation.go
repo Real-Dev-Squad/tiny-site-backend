@@ -3,40 +3,52 @@ package middleware
 import (
 	"tiny-site-backend/models"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
 )
 
 var validate = validator.New()
 
-func ValidateSignUpInput(c *fiber.Ctx) error {
-	var payload models.SignUpInput
+func ValidateSignUpInput() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var payload models.SignUpInput
 
-	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": err.Error()})
+		if err := c.ShouldBindJSON(&payload); err != nil {
+			c.JSON(400, gin.H{"status": "error", "message": err.Error()})
+			c.Abort()
+			return
+		}
+
+		if err := validate.Struct(payload); err != nil {
+			c.JSON(400, gin.H{"status": "error", "message": err.Error()})
+			c.Abort()
+			return
+		}
+
+		c.Set("validatedPayload", &payload)
+
+		c.Next()
 	}
-
-	if err := validate.Struct(payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": err.Error()})
-	}
-
-	c.Locals("validatedPayload", &payload)
-
-	return c.Next()
 }
 
-func ValidateSignInInput(c *fiber.Ctx) error {
-	var payload models.SignInInput
+func ValidateSignInInput() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var payload models.SignInInput
 
-	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": err.Error()})
+		if err := c.ShouldBindJSON(&payload); err != nil {
+			c.JSON(400, gin.H{"status": "error", "message": err.Error()})
+			c.Abort()
+			return
+		}
+
+		if err := validate.Struct(payload); err != nil {
+			c.JSON(400, gin.H{"status": "error", "message": err.Error()})
+			c.Abort()
+			return
+		}
+
+		c.Set("validatedPayload", &payload)
+
+		c.Next()
 	}
-
-	if err := validate.Struct(payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": err.Error()})
-	}
-
-	c.Locals("validatedPayload", &payload)
-
-	return c.Next()
 }

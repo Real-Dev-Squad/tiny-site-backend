@@ -9,8 +9,8 @@ import (
 	"testing"
 	"tiny-site-backend/routes"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
@@ -47,34 +47,39 @@ func TestGetUsers(t *testing.T) {
 		t.Fatal("Test database not initialized")
 	}
 
-	app := fiber.New()
-	routes.SetupRoutes(app)
-
-	jwtSecret := os.Getenv("JWT_SECRET")
+	router := gin.Default()
+	routes.SetupRoutes(router)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": "4231c0e9-e7d7-4633-bf4a-a5b196f4ff7d",
 	})
 
+	jwtSecret := os.Getenv("JWT_SECRET")
+
 	tokenString, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println("Token String:", tokenString)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/users/self", nil)
 	req.Header.Set("Authorization", "Bearer "+tokenString)
 
-	resp, err := app.Test(req)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
 
-	if err != nil {
-		t.Fatal(err)
+	resp := w.Result()
+
+	if resp == nil {
+		t.Fatal("Response is nil")
 	}
+
+	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	fmt.Println("Response Body:", string(body))
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
