@@ -15,12 +15,14 @@ import (
 func main() {
 	config, err := initializers.LoadConfig(".")
 	if err != nil {
-		log.Fatalf("Failed to load environment variables: %v\n", err)
+		log.Printf("Failed to load environment variables: %v\n", err)
+		return
 	}
 
 	err = initializers.ConnectDB(&config)
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v\n", err)
+		log.Printf("Failed to connect to the database: %v\n", err)
+		return
 	}
 
 	r := gin.Default()
@@ -39,6 +41,7 @@ func main() {
 	port := ":8000"
 	fmt.Printf("Server listening on port %s\n", port)
 	if err := r.Run(port); err != nil {
-		log.Fatalf("Error while starting the server: %v\n", err)
+		log.Printf("Error while starting the server: %v\n", err)
+		return
 	}
 }
