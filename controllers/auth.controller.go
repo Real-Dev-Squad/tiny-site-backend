@@ -78,7 +78,7 @@ func SignInUser(c *gin.Context) {
 }
 
 func LogoutUser(c *gin.Context) {
-	unsetAuthTokenCookie(c)
+	c.SetCookie("token", "", -1, "/", "", false, true)
 	c.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
@@ -117,10 +117,6 @@ func setAuthTokenCookie(c *gin.Context, tokenString string) {
 	Origin := os.Getenv("DOMAIN")
 	c.SetSameSite(http.SameSiteNoneMode)
 	c.SetCookie("token", tokenString, int(config.JwtMaxAge), "/", Origin, false, true)
-}
-
-func unsetAuthTokenCookie(c *gin.Context) {
-	c.SetCookie("token", "", -1, "/", "", false, true)
 }
 
 func handleError(c *gin.Context, err error) {
