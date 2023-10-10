@@ -18,6 +18,11 @@ import (
 func SignUpUser(c *gin.Context) {
 	payload := c.MustGet("validatedPayload").(*models.SignUpInput)
 
+	if payload.Password != payload.PasswordConfirm {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Password and password confirmation do not match"})
+		return
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(400, gin.H{"status": "fail", "message": err.Error()})
@@ -36,14 +41,7 @@ func SignUpUser(c *gin.Context) {
 	result := initializers.DB.Create(&newUser)
 
 	if result.Error != nil {
-		errMsg := result.Error.Error()
-		if strings.Contains(errMsg, "duplicate key value violates unique constraint") {
-			c.JSON(409, gin.H{"status": "error", "message": "User with that email already exists"})
-		} else if strings.Contains(errMsg, "record not found") {
-			c.JSON(404, gin.H{"status": "error", "message": "Record not found"})
-		} else {
-			c.JSON(502, gin.H{"status": "error", "message": errMsg})
-		}
+		handleSignupError(c, result.Error)
 		return
 	}
 
@@ -54,19 +52,48 @@ func SignInUser(c *gin.Context) {
 	validatedPayload := c.MustGet("validatedPayload").(*models.SignInInput)
 	payload := *validatedPayload
 
-	var user models.User
-	result := initializers.DB.First(&user, "username = ?", payload.Username)
-	if result.Error != nil {
-		c.JSON(400, gin.H{"status": "error", "message": "Invalid username or Password"})
-		return
-	}
-
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
+	user, err := getUserByUsername(payload.Username)
 	if err != nil {
-		c.JSON(400, gin.H{"status": "error", "message": "Invalid username or Password"})
+		handleError(c, err)
+		return
+	}
+	fmt.Println("Hashed Password from DB:", user.Password)
+	fmt.Println("Hashed Password from Login:", payload.Password)
+
+	if err := validatePassword(user.Password, payload.Password); err != nil {
+		fmt.Println("Password comparison failed:", err)
+		handleError(c, err)
 		return
 	}
 
+	tokenString, err := generateAuthToken(user)
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+
+	setAuthTokenCookie(c, tokenString)
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "token": tokenString})
+}
+
+func LogoutUser(c *gin.Context) {
+	unsetAuthTokenCookie(c)
+	c.JSON(http.StatusOK, gin.H{"status": "success"})
+}
+
+func handleSignupError(c *gin.Context, err error) {
+	errMsg := err.Error()
+	if strings.Contains(errMsg, "duplicate key value violates unique constraint") {
+		c.JSON(http.StatusConflict, gin.H{"status": "error", "message": "User with that email already exists"})
+	} else if strings.Contains(errMsg, "record not found") {
+		c.JSON(http.StatusNotFound, gin.H{"status": "error", "message": "Record not found"})
+	} else {
+		c.JSON(http.StatusBadGateway, gin.H{"status": "error", "message": errMsg})
+	}
+}
+
+func generateAuthToken(user models.User) (string, error) {
 	config, _ := initializers.LoadConfig(".")
 
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -79,20 +106,37 @@ func SignInUser(c *gin.Context) {
 
 	tokenString, err := token.SignedString([]byte(config.JwtSecret))
 	if err != nil {
-		c.JSON(502, gin.H{"status": "error", "message": fmt.Sprintf("generating JWT Token failed: %v", err)})
-		return
+		return "", fmt.Errorf("generating JWT Token failed: %v", err)
 	}
 
-	Origin := os.Getenv("DOMAIN")
-
-	c.SetSameSite(http.SameSiteNoneMode)
-
-	c.SetCookie("token", tokenString, int(config.JwtMaxAge), "/", Origin, false, true)
-
-	c.JSON(200, gin.H{"status": "success", "token": tokenString})
+	return tokenString, nil
 }
 
-func LogoutUser(c *gin.Context) {
+func setAuthTokenCookie(c *gin.Context, tokenString string) {
+	config, _ := initializers.LoadConfig(".")
+	Origin := os.Getenv("DOMAIN")
+	c.SetSameSite(http.SameSiteNoneMode)
+	c.SetCookie("token", tokenString, int(config.JwtMaxAge), "/", Origin, false, true)
+}
+
+func unsetAuthTokenCookie(c *gin.Context) {
 	c.SetCookie("token", "", -1, "/", "", false, true)
-	c.JSON(200, gin.H{"status": "success"})
+}
+
+func handleError(c *gin.Context, err error) {
+	c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": err.Error()})
+}
+
+func getUserByUsername(username string) (models.User, error) {
+	var user models.User
+	result := initializers.DB.First(&user, "username = ?", username)
+	if result.Error != nil {
+		fmt.Println("Error querying user:", result.Error)
+		return models.User{}, result.Error
+	}
+	return user, nil
+}
+
+func validatePassword(savedPassword, inputPassword string) error {
+	return bcrypt.CompareHashAndPassword([]byte(savedPassword), []byte(inputPassword))
 }
