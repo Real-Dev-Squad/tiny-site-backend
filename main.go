@@ -13,7 +13,7 @@ func main() {
 	dsn := os.Getenv("DB_URL")
 	db := utils.SetupDBConnection(dsn)
 
-	port := flag.String("port", ":8080", "server address to listen on")
+	port := flag.String("port", ":8000", "server address to listen on")
 	flag.Parse()
 
 	routes.Listen("127.0.0.1"+*port, db)
