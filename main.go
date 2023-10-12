@@ -1,11 +1,20 @@
 package main
 
 import (
-	"net/http"
-	"url-shortener/routes"
+	"flag"
+	"os"
+
+	"github.com/Real-Dev-Squad/tiny-site-backend/routes"
+	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
 )
 
 func main() {
-	http.HandleFunc("/", routes.MainHandler)
-	http.ListenAndServe(":8080", nil)
+	utils.LoadEnv(".env")
+	dsn := os.Getenv("DB_URL")
+	db := utils.SetupDBConnection(dsn)
+
+	port := flag.String("port", ":8000", "server address to listen on")
+	flag.Parse()
+
+	routes.Listen("127.0.0.1"+*port, db)
 }
