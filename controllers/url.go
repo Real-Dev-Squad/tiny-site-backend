@@ -1,10 +1,10 @@
 package controller
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
-	"math/rand"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/Real-Dev-Squad/tiny-site-backend/models"
@@ -42,11 +42,10 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	// Use Base62 encoding to create the ShortUrl
-	body.ShortUrl = generateShortURL()
+	body.ShortUrl = generateMD5Hash(body.OrgUrl)
 	body.CreatedAt = time.Now()
-	body.ExpiredAt = time.Now().AddDate(0, 0, 7)
-	fmt.Println("Decrypted URL:", decryptShortURL(body.ShortUrl))
+	// body.CreatedBy = body.CreatedBy
+	// body.ExpiredAt = time.Now().AddDate(0, 0, 7)
 
 	_, err = db.NewInsert().Model(&body).Exec(ctx)
 
@@ -64,20 +63,27 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	})
 }
 
-func generateShortURL() string {
-	characters := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-	shortURL := make([]byte, 6)
-	for i := range shortURL {
-		shortURL[i] = characters[rand.Intn(len(characters))]
-	}
-	return string(shortURL)
+func generateMD5Hash(url string) string {
+	url = url + time.Nanosecond.String()
+	hash := md5.New()
+	hash.Write([]byte(url))
+	return hex.EncodeToString(hash.Sum(nil))[:8]
 }
 
-func decryptShortURL(shortURL string) string {
-	characters := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-	decryptedURL := ""
-	for _, char := range shortURL {
-		decryptedURL += string(characters[len(characters)-strings.IndexRune(characters, rune(char))-1])
-	}
-	return decryptedURL
-}
+// func generateShortURL() string {
+// 	characters := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+// 	shortURL := make([]byte, 6)
+// 	for i := range shortURL {
+// 		shortURL[i] = characters[rand.Intn(len(characters))]
+// 	}
+// 	return string(shortURL)
+// }
+
+// func decryptShortURL(shortURL string) string {
+// 	characters := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+// 	decryptedURL := ""
+// 	for _, char := range shortURL {
+// 		decryptedURL += string(characters[len(characters)-strings.IndexRune(characters, rune(char))-1])
+// 	}
+// 	return decryptedURL
+// }

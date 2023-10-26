@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -16,7 +15,6 @@ func SetupV1Routes(db *bun.DB) *gin.Engine {
 	v1 := router.Group("v1/")
 	UserRoutes(v1, db)
 	AuthRoutes(v1, db)
-	fmt.Println("tiny url")
 	TinyURLRoutes(v1, db)
 
 	allowedOrigins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
