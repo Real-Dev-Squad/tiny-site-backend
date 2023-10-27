@@ -69,21 +69,3 @@ func generateMD5Hash(url string) string {
 	hash.Write([]byte(url))
 	return hex.EncodeToString(hash.Sum(nil))[:8]
 }
-
-// func generateShortURL() string {
-// 	characters := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-// 	shortURL := make([]byte, 6)
-// 	for i := range shortURL {
-// 		shortURL[i] = characters[rand.Intn(len(characters))]
-// 	}
-// 	return string(shortURL)
-// }
-
-// func decryptShortURL(shortURL string) string {
-// 	characters := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-// 	decryptedURL := ""
-// 	for _, char := range shortURL {
-// 		decryptedURL += string(characters[len(characters)-strings.IndexRune(characters, rune(char))-1])
-// 	}
-// 	return decryptedURL
-// }
