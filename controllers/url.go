@@ -1,13 +1,12 @@
 package controller
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/Real-Dev-Squad/tiny-site-backend/models"
+	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/uptrace/bun"
 )
@@ -32,7 +31,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	body.ShortUrl = generateMD5Hash(body.OrgUrl)
+	body.ShortUrl = utils.GenerateMD5Hash(body.OrgUrl)
 
 	body.CreatedAt = time.Now()
 
@@ -49,11 +48,4 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Tiny URL created successfully",
 	})
-}
-
-func generateMD5Hash(url string) string {
-	url = url + time.Nanosecond.String()
-	hash := md5.New()
-	hash.Write([]byte(url))
-	return hex.EncodeToString(hash.Sum(nil))[:8]
 }
