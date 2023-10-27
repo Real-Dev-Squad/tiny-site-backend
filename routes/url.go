@@ -9,10 +9,6 @@ import (
 func TinyURLRoutes(rg *gin.RouterGroup, db *bun.DB) {
 	tinyURL := rg.Group("/tinyurl")
 
-	tinyURL.GET("", func(ctx *gin.Context) {
-		controller.GetTinyURLs(ctx, db)
-	})
-
 	tinyURL.POST("", func(ctx *gin.Context) {
 		controller.CreateTinyURL(ctx, db)
 	})
