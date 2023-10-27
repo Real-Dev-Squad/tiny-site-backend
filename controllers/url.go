@@ -42,10 +42,16 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
+	if body.OrgUrl == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "OrgUrl is required",
+		})
+		return
+	}
+
 	body.ShortUrl = generateMD5Hash(body.OrgUrl)
+
 	body.CreatedAt = time.Now()
-	// body.CreatedBy = body.CreatedBy
-	// body.ExpiredAt = time.Now().AddDate(0, 0, 7)
 
 	_, err = db.NewInsert().Model(&body).Exec(ctx)
 
@@ -59,7 +65,6 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Tiny URL created successfully",
-		"data":    "",
 	})
 }
 
