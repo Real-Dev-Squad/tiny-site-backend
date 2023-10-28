@@ -14,11 +14,20 @@
 
 [If applicable, add screenshots or images that help illustrate the issue. You can use the following Markdown syntax to embed images:]
 
-### Environment
+### Reproducibility
 
-- Operating System: [e.g., Windows, macOS, Linux]
-- Browser (if applicable): [e.g., Chrome, Firefox, Safari]
-- Version of Software/Project: [e.g., v1.0.0]
+ - [ ] This issue is reproducible
+-  [ ] This issue is not reproducible
+
+### Steps to Reproduce
+1. [Step 1]
+2. [Step 2]
+
+### Severity/Priority
+ - [ ] Critical
+ - [ ] High
+ - [ ] Medium
+ - [ ] Low
 
 ### Additional Information
 
