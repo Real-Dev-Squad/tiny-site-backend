@@ -29,14 +29,6 @@
  - [ ] Medium
  - [ ] Low
 
-### Labels
- - [ ] Bug
- - [ ] Feature Request
- - [ ] Enhancement
- - [ ] Documentation
- - [ ] Help Wanted
- - [ ] Others
-
 ### Additional Information
 
 [Include any additional context, logs, or details that might be helpful in addressing the issue.]
