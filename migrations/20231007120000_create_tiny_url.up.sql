@@ -5,7 +5,7 @@ CREATE TABLE tiny_url (
   org_url text NOT NULL,
   short_url text UNIQUE NOT NULL,
   comment text,
-  user_id int NOT NULL,
+  user_id int NOT NULL REFERENCES users(id), 
   expired_at timestamp NOT NULL,
   created_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC'),
   created_by text NOT NULL
