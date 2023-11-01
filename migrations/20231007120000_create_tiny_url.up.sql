@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE TABLE tiny_url (
   id bigserial PRIMARY KEY,
-  org_url text NOT NULL,
+  original_url text NOT NULL,
   short_url text UNIQUE NOT NULL,
   comment text,
   user_id int NOT NULL REFERENCES users(id), 

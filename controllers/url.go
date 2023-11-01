@@ -24,14 +24,14 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	if body.OrgUrl == "" {
+	if body.OriginalUrl == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "OrgUrl is required",
 		})
 		return
 	}
 
-	body.ShortUrl = utils.GenerateMD5Hash(body.OrgUrl)
+	body.ShortUrl = utils.GenerateMD5Hash(body.OriginalUrl)
 
 	body.CreatedAt = time.Now()
 
