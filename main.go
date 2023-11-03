@@ -16,5 +16,5 @@ func main() {
 	port := flag.String("port", os.Getenv("PORT"), "server address to listen on")
 	flag.Parse()
 
-	routes.Listen("0.0.0.0"+*port, db)
+	routes.Listen("0.0.0.0:"+*port, db)
 }
