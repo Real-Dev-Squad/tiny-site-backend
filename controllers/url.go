@@ -46,6 +46,25 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"message": "Tiny URL created successfully",
+		"message":   "Tiny URL created successfully",
+		"short_url": body.ShortUrl,
 	})
+}
+
+func RedirectShortURL(ctx *gin.Context, db *bun.DB) {
+	shortURL := ctx.Param("shortURL")
+
+	var tinyURL models.Tinyurl
+	err := db.NewSelect().
+		Model(&tinyURL).
+		Where("short_url = ?", shortURL).
+		Scan(ctx, &tinyURL) // Use Scan to bind data to the struct.
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"message": "Short URL not found",
+		})
+		return
+	}
+
+	ctx.Redirect(http.StatusMovedPermanently, tinyURL.OriginalUrl)
 }
