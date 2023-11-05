@@ -58,7 +58,7 @@ func RedirectShortURL(ctx *gin.Context, db *bun.DB) {
 	err := db.NewSelect().
 		Model(&tinyURL).
 		Where("short_url = ?", shortURL).
-		Scan(ctx, &tinyURL) // Use Scan to bind data to the struct.
+		Scan(ctx, &tinyURL)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "Short URL not found",
