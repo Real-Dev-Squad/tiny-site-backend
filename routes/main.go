@@ -15,7 +15,7 @@ func SetupV1Routes(db *bun.DB) *gin.Engine {
 
 	corsConfig := cors.Config{
 		AllowOrigins:     []string{allowedOrigins},
-		AllowMethods:     []string{"GET", "POST"},
+		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
 		AllowCredentials: true,
 	}
