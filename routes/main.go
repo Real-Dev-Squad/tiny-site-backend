@@ -2,7 +2,6 @@ package routes
 
 import (
 	"os"
-	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -10,22 +9,23 @@ import (
 )
 
 func SetupV1Routes(db *bun.DB) *gin.Engine {
-	var router = gin.Default()
+	router := gin.Default()
+
+	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+
+	corsConfig := cors.Config{
+		AllowOrigins:     []string{allowedOrigins},
+		AllowMethods:     []string{"GET", "POST"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		AllowCredentials: true,
+	}
+
+	router.Use(cors.New(corsConfig))
 
 	v1 := router.Group("v1/")
 	UserRoutes(v1, db)
 	AuthRoutes(v1, db)
 	TinyURLRoutes(v1, db)
-
-	allowedOrigins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
-
-	config := cors.DefaultConfig()
-	config.AllowOrigins = allowedOrigins
-	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept"}
-	config.AllowMethods = []string{"GET", "POST"}
-	config.AllowCredentials = true
-
-	router.Use(cors.New(config))
 
 	return router
 }
