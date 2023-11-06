@@ -3,8 +3,8 @@ package routes
 import (
     "github.com/gin-gonic/gin"
     "github.com/uptrace/bun"
-    "github.com/Real-Dev-Squad/tiny-site-backend/controllers"
-    "github.com/Real-Dev-Squad/tiny-site-backend/middlewares"
+	"github.com/Real-Dev-Squad/tiny-site-backend/controllers"
+	"github.com/Real-Dev-Squad/tiny-site-backend/middlewares"
 )
 
 func UserRoutes(rg *gin.RouterGroup, db *bun.DB) {
@@ -12,14 +12,14 @@ func UserRoutes(rg *gin.RouterGroup, db *bun.DB) {
     users.Use(middleware.AuthMiddleware())
 
     users.GET("", func(ctx *gin.Context) {
-        controllers.GetUserList(ctx, db)
+        controller.GetUserList(ctx, db)
     })
 
     users.GET("/:id", func(ctx *gin.Context) {
-        controllers.GetUserByID(ctx, db)
+        controller.GetUserByID(ctx, db)
     })
 
     users.GET("/self", func(ctx *gin.Context) {
-        controllers.GetSelfUser(ctx, db)
+        controller.GetSelfUser(ctx, db)
     })
 }
