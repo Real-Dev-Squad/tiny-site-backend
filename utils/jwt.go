@@ -17,13 +17,12 @@ func GenerateToken(user *models.User) (string, error) {
 	issuer := os.Getenv("JWT_ISSUER")
 	key := []byte(os.Getenv("JWT_SECRET"))
 
-	tokenValidityInHours, err := strconv.ParseInt(os.Getenv("JWT_VALIDITY_IN_HOURS"), 10, 8)
-
+	tokenValidityInHours, err := strconv.ParseInt(os.Getenv("JWT_VALIDITY_IN_HOURS"), 10, 64)
 	if err != nil {
 		return "", err
 	}
 
-	tokenExpiryTime := time.Now().Add(time.Second * time.Duration(tokenValidityInHours)).UTC().Format(time.RFC3339)
+	tokenExpiryTime := time.Now().Add(time.Duration(tokenValidityInHours) * time.Hour).UTC().Format(time.RFC3339)
 
 	t := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
 		"iss":   issuer,
