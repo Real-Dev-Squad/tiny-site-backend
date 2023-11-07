@@ -107,4 +107,12 @@ func AuthRoutes(reg *gin.RouterGroup, db *bun.DB) {
 		ctx.SetCookie("token", token, 3600, "/", domain, true, true)
 		ctx.Redirect(302, authRedirectUrl)
 	})
+
+	auth.GET("/logout", func(ctx *gin.Context) {
+		domain := os.Getenv("DOMAIN")
+		authRedirectUrl := os.Getenv("AUTH_REDIRECT_URL")
+
+		ctx.SetCookie("token", "", -1, "/", domain, true, true)
+		ctx.Redirect(302, authRedirectUrl)
+	})
 }

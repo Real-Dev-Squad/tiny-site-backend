@@ -1,31 +1,25 @@
 package routes
 
 import (
-	"net/http"
-
-	"github.com/Real-Dev-Squad/tiny-site-backend/models"
-	"github.com/gin-gonic/gin"
-	"github.com/uptrace/bun"
+    "github.com/gin-gonic/gin"
+    "github.com/uptrace/bun"
+	"github.com/Real-Dev-Squad/tiny-site-backend/controllers"
+	"github.com/Real-Dev-Squad/tiny-site-backend/middlewares"
 )
 
 func UserRoutes(rg *gin.RouterGroup, db *bun.DB) {
-	users := rg.Group("/users")
+    users := rg.Group("/users")
+    users.Use(middleware.AuthMiddleware())
 
-	users.GET("", func(ctx *gin.Context) {
+    users.GET("", func(ctx *gin.Context) {
+        controller.GetUserList(ctx, db)
+    })
 
-		var users []models.User
-		err := db.NewSelect().Model(&users).OrderExpr("id ASC").Limit(10).Scan(ctx)
+    users.GET("/:id", func(ctx *gin.Context) {
+        controller.GetUserByID(ctx, db)
+    })
 
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"message": "error",
-			})
-			return
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{
-			"message": "users fetched successfully",
-			"data":    users,
-		})
-	})
+    users.GET("/self", func(ctx *gin.Context) {
+        controller.GetSelfUser(ctx, db)
+    })
 }
