@@ -12,4 +12,8 @@ func TinyURLRoutes(rg *gin.RouterGroup, db *bun.DB) {
 	tinyURL.POST("", func(ctx *gin.Context) {
 		controller.CreateTinyURL(ctx, db)
 	})
+
+	tinyURL.GET("/:shortURL", func(ctx *gin.Context) {
+		controller.RedirectShortURL(ctx, db)
+	})
 }
