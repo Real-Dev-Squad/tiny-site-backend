@@ -83,18 +83,17 @@ pgAdmin is a popular database management tool for PostgreSQL. It is recommended 
    go run main.go
    ```
 
-**Using Air for hot reloading**
+- Use Air for hot reloading
 
-````bash
- go get -u github.com/cosmtrek/air
- air
- ```
+    ```bash
+    go get -u github.com/cosmtrek/air
+    air
+    ```
 
-The backend server should now be running at `http://localhost:8000`.
+    The backend server should now be running at `http://localhost:8000`.
 
 8. Access the Tiny Site Backend API via a web browser or API client, and start developing your application.
 
 ## Usage
 
 You can access the Tiny Site Backend API at `http://localhost:8000` once the server is running. Refer to the project's documentation or API endpoints for more information on how to interact with the backend.
-````
