@@ -8,11 +8,11 @@ import (
 	"github.com/Real-Dev-Squad/tiny-site-backend/routes"
 )
 
-func TestLogout(t *testing.T) {
+func TestSignout(t *testing.T) {
 	router := routes.SetupV1Routes(db)
 
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/v1/auth/logout", nil)
+	req, err := http.NewRequest("GET", "/v1/auth/signout", nil)
 
 	router.ServeHTTP(w, req)
 

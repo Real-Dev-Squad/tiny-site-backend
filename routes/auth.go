@@ -108,7 +108,7 @@ func AuthRoutes(reg *gin.RouterGroup, db *bun.DB) {
 		ctx.Redirect(302, authRedirectUrl)
 	})
 
-	auth.GET("/logout", func(ctx *gin.Context) {
+	auth.GET("/signout", func(ctx *gin.Context) {
 		domain := os.Getenv("DOMAIN")
 		authRedirectUrl := os.Getenv("AUTH_REDIRECT_URL")
 
