@@ -19,7 +19,7 @@ func TestCreateTinyURL(t *testing.T) {
 		"CreatedBy": "testuser",
 	}
 	requestJSON, _ := json.Marshal(requestBody)
-	req, _ := http.NewRequest("POST", "/v1/create-tinyurl", bytes.NewBuffer(requestJSON))
+	req, _ := http.NewRequest("POST", "/v1/shorten", bytes.NewBuffer(requestJSON))
 	req.Header.Set("Content-Type", "application/json")
 
 	w := httptest.NewRecorder()
@@ -48,7 +48,7 @@ func TestRedirectShortURL(t *testing.T) {
 	testShortURL := "37fff02c"
 	expectedOriginalURL := "https://react.dev/learn/"
 
-	req, _ := http.NewRequest("GET", "/v1/tinyurl/"+testShortURL, nil)
+	req, _ := http.NewRequest("GET", "/v1/redirect/"+testShortURL, nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusMovedPermanently {
@@ -63,7 +63,7 @@ func TestRedirectShortURL(t *testing.T) {
 
 func setupTestRouter() *gin.Engine {
 	router := routes.SetupV1Routes(db)
-	router.POST("/v1/create-tinyurl", func(ctx *gin.Context) {
+	router.POST("/v1/shorten", func(ctx *gin.Context) {
 		controller.CreateTinyURL(ctx, db)
 	})
 	return router

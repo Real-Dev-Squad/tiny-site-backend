@@ -8,8 +8,12 @@ import (
 )
 
 func UserRoutes(rg *gin.RouterGroup, db *bun.DB) {
+    
     users := rg.Group("/users")
+    user := rg.Group("/user")
+
     users.Use(middleware.AuthMiddleware())
+    user.Use(middleware.AuthMiddleware())
 
     users.GET("", func(ctx *gin.Context) {
         controller.GetUserList(ctx, db)
@@ -19,7 +23,11 @@ func UserRoutes(rg *gin.RouterGroup, db *bun.DB) {
         controller.GetUserByID(ctx, db)
     })
 
-    users.GET("/self", func(ctx *gin.Context) {
+    user.GET("", func(ctx *gin.Context) {
         controller.GetSelfUser(ctx, db)
+    })
+
+    user.GET("/:id/urls", func(ctx *gin.Context) {
+        controller.GetAllURLs(ctx, db)
     })
 }

@@ -20,7 +20,7 @@ func GetUserList(ctx *gin.Context, db *bun.DB) {
     }
 
     ctx.JSON(http.StatusOK, gin.H{
-        "message": "users fetched successfully",
+        "message": "Users fetched successfully",
         "data":    users,
     })
 }
@@ -39,7 +39,7 @@ func GetUserByID(ctx *gin.Context, db *bun.DB) {
     }
 
     ctx.JSON(http.StatusOK, gin.H{
-        "message": "user fetched successfully",
+        "message": "User fetched successfully",
         "data":    user,
     })
 }
@@ -57,8 +57,5 @@ func GetSelfUser(ctx *gin.Context, db *bun.DB) {
         return
     }
 
-    ctx.JSON(http.StatusOK, gin.H{
-        "message": "user fetched successfully",
-        "data":    user,
-    })
+    ctx.JSON(http.StatusOK, user)
 }
