@@ -69,7 +69,6 @@ func RedirectShortURL(ctx *gin.Context, db *bun.DB) {
 	ctx.Redirect(http.StatusMovedPermanently, tinyURL.OriginalUrl)
 }
 
-
 func GetAllURLs(ctx *gin.Context, db *bun.DB) {
 	userID := ctx.Param("id")
 	var tinyURL []models.Tinyurl
@@ -88,7 +87,7 @@ func GetAllURLs(ctx *gin.Context, db *bun.DB) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "All URLs fetched successfully",
-		"urls": tinyURL,
+		"urls":    tinyURL,
 	})
 }
 
@@ -110,6 +109,6 @@ func GetURLDetails(ctx *gin.Context, db *bun.DB) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "URL fetched successfully",
-		"url": tinyURL,
+		"url":     tinyURL,
 	})
 }
