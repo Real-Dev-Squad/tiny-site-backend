@@ -95,3 +95,21 @@ func TestGetUserByIdUnauthorized(t *testing.T) {
 		t.Errorf("Expected status code %d but got %d", http.StatusUnauthorized, w.Code)
 	}
 }
+
+func TestGetUrlsByUserIdUnauthorized(t *testing.T) {
+	router := routes.SetupV1Routes(db)
+
+	w := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/v1/user/1/urls", nil)
+
+	req.Header.Set("Authorization", "Bearer invalid_token")
+	router.ServeHTTP(w, req)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("Expected status code %d but got %d", http.StatusUnauthorized, w.Code)
+	}
+}

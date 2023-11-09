@@ -66,5 +66,28 @@ func setupTestRouter() *gin.Engine {
 	router.POST("/v1/create-tinyurl", func(ctx *gin.Context) {
 		controller.CreateTinyURL(ctx, db)
 	})
+	router.GET("/v1/tinyurl/:shortUrl", func(ctx *gin.Context) {
+		controller.GetURLDetails(ctx, db)
+	})
 	return router
+}
+
+func TestGetUrlDetails(t *testing.T) {
+	router := setupTestRouter()
+	w := httptest.NewRecorder()
+
+	testShortURL := "37fff02c"
+	expectedOriginalURL := "https://react.dev/learn/"
+
+	req, _ := http.NewRequest("GET", "/v1/tinyurl/"+testShortURL, nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusMovedPermanently {
+		t.Errorf("Expected status %d, got %d", http.StatusMovedPermanently, w.Code)
+	}
+
+	locationHeader := w.Header().Get("Location")
+	if locationHeader != expectedOriginalURL {
+		t.Errorf("Expected Location header %q, got %q", expectedOriginalURL, locationHeader)
+	}
 }
