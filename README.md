@@ -1,9 +1,9 @@
 # Tiny Site Backend Setup Guide
 
-This README provides step-by-step instructions for setting up the Tiny Site Backend on your local development environment. The Tiny Site Backend is built using the Go programming language, PostgreSQL for the database, and Google authentication for user management. Before you begin, ensure that you have the following prerequisites installed on your system:
+This README provides step-by-step instructions for setting up the Tiny Site Backend on your local development environment. The Tiny Site Backend is built using the Go programming language, PostgreSQL for the database, and Google authentication for authentication. Before you begin, ensure that you have the following prerequisites installed on your system:
 
-1. Go 1.21
-2. PostgreSQL
+1. Go 1.21 or higher
+2. PostgreSQL 15 or higher
 3. pgAdmin (optional but recommended for database management)
 
 ## Prerequisites
@@ -70,6 +70,11 @@ pgAdmin is a popular database management tool for PostgreSQL. It is recommended 
    - Save the changes to your `.env` file.
 
 5. Create the PostgreSQL database for the project. You can use pgAdmin or command-line tools to create the database. Update the `.env` file with the database connection details.
+
+    ```
+    DB_URL=postgres://username:password@host:port/database_name
+    TEST_DB_URL=postgres://username:password@host:port/test_database_name
+    ```
 
 6. Install the Go project dependencies:
 
