@@ -68,3 +68,47 @@ func RedirectShortURL(ctx *gin.Context, db *bun.DB) {
 
 	ctx.Redirect(http.StatusMovedPermanently, tinyURL.OriginalUrl)
 }
+
+func GetAllURLs(ctx *gin.Context, db *bun.DB) {
+	userID := ctx.Param("id")
+	var tinyURL []models.Tinyurl
+
+	err := db.NewSelect().
+		Model(&tinyURL).
+		Where("user_id = ?", userID).
+		Scan(ctx, &tinyURL)
+
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"message": "No URLs found for the user",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "All URLs fetched successfully",
+		"urls":    tinyURL,
+	})
+}
+
+func GetURLDetails(ctx *gin.Context, db *bun.DB) {
+	shortURL := ctx.Param("shortURL")
+	var tinyURL models.Tinyurl
+
+	err := db.NewSelect().
+		Model(&tinyURL).
+		Where("short_url = ?", shortURL).
+		Scan(ctx, &tinyURL)
+
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"message": "No URLs found for the user",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "URL fetched successfully",
+		"url":     tinyURL,
+	})
+}
