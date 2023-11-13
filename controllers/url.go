@@ -49,6 +49,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		"message":   "Tiny URL created successfully",
 		"short_url": body.ShortUrl,
 	})
+
 }
 
 func RedirectShortURL(ctx *gin.Context, db *bun.DB) {
