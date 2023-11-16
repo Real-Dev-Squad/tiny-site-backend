@@ -31,8 +31,20 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	body.ShortUrl = utils.GenerateMD5Hash(body.OriginalUrl)
+	err = db.NewSelect().
+		Model(&body).
+		Where("original_url = ?", body.OriginalUrl).
+		Scan(ctx, &body)
 
+	if err == nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"message":   "Tiny URL already exists",
+			"short_url": body.ShortUrl,
+		})
+		return
+	}
+
+	body.ShortUrl = utils.GenerateMD5Hash(body.OriginalUrl)
 	body.CreatedAt = time.Now()
 
 	_, err = db.NewInsert().Model(&body).Exec(ctx)
@@ -76,6 +88,7 @@ func GetAllURLs(ctx *gin.Context, db *bun.DB) {
 	err := db.NewSelect().
 		Model(&tinyURL).
 		Where("user_id = ?", userID).
+		Order("created_at DESC").
 		Scan(ctx, &tinyURL)
 
 	if err != nil {
