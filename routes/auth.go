@@ -80,7 +80,7 @@ func AuthRoutes(reg *gin.RouterGroup, db *bun.DB) {
 		// User does not exist, create a new user
 		if count == 0 {
 			newUser := &models.User{
-				Username: googleAccountInfo.Name,
+				UserName: googleAccountInfo.Name,
 				Email:    googleAccountInfo.Email,
 			}
 
