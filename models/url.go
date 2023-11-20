@@ -9,12 +9,12 @@ import (
 type Tinyurl struct {
 	bun.BaseModel `bun:"table:tiny_url"`
 
-	Id          int64     `bun:"id,pk,autoincrement"`
-	OriginalUrl string    `bun:"original_url,notnull"`
-	ShortUrl    string    `bun:"short_url,unique,notnull"`
-	Comment     string    `bun:"comment"`
-	UserId      int       `bun:"user_id,rel:belongs-to,join:id"`
-	ExpiredAt   time.Time `bun:"expired_at,notnull"`
-	CreatedAt   time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
-	CreatedBy   string    `bun:"created_by,notnull"`
+	ID          int64     `bun:"id,pk,autoincrement" json:"id"`
+	OriginalUrl string    `bun:"original_url,notnull" json:"originalUrl"`
+	ShortUrl    string    `bun:"short_url,unique,notnull" json:"shortUrl"`
+	Comment     string    `bun:"comment" json:"comment"`
+	UserID      int       `bun:"user_id,rel:belongs-to,join:id" json:"userId"`
+	ExpiredAt   time.Time `bun:"expired_at,notnull" json:"expiredAt"`
+	CreatedAt   time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	CreatedBy   string    `bun:"created_by,notnull" json:"createdBy"`
 }
