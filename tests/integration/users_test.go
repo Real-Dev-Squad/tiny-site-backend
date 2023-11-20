@@ -29,7 +29,7 @@ func TestMain(m *testing.M) {
 
 func generateValidAuthToken() string {
 	user := &models.User{
-		Username: "testuser",
+		UserName: "testuser",
 		Email:    "test@example.com",
 	}
 
@@ -96,6 +96,28 @@ func TestGetSelfUnauthorized(t *testing.T) {
 
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("Expected status code %d but got %d", http.StatusUnauthorized, w.Code)
+	}
+}
+
+func TestGetUserById(t *testing.T) {
+	router := gin.Default()
+	routes.UserRoutes(router.Group("/v1"), db)
+
+	w := httptest.NewRecorder()
+
+	token := generateValidAuthToken()
+
+	req, err := http.NewRequest("GET", "/v1/users/1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.AddCookie(&http.Cookie{Name: "token", Value: token})
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status code %d but got %d", http.StatusOK, w.Code)
 	}
 }
 
