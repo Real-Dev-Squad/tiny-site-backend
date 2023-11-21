@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/Real-Dev-Squad/tiny-site-backend/dtos"
 	"github.com/Real-Dev-Squad/tiny-site-backend/models"
 	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
 	"github.com/gin-gonic/gin"
@@ -14,10 +14,7 @@ import (
 func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	var body models.Tinyurl
 
-	err := ctx.BindJSON(&body)
-
-	if err != nil {
-		fmt.Println("JSON Error:", err)
+	if err := ctx.BindJSON(&body); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "JSON Error: " + err.Error(),
 		})
@@ -31,15 +28,10 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	err = db.NewSelect().
-		Model(&body).
-		Where("original_url = ?", body.OriginalUrl).
-		Scan(ctx, &body)
-
-	if err == nil {
-		ctx.JSON(http.StatusOK, gin.H{
-			"message":   "Tiny URL already exists",
-			"short_url": body.ShortUrl,
+	if err := db.NewSelect().Model(&body).Where("original_url = ?", body.OriginalUrl).Scan(ctx, &body); err == nil {
+		ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
+			Message:  "Tiny URL already exists",
+			ShortURL: body.ShortUrl,
 		})
 		return
 	}
@@ -47,19 +39,16 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	body.ShortUrl = utils.GenerateMD5Hash(body.OriginalUrl)
 	body.CreatedAt = time.Now()
 
-	_, err = db.NewInsert().Model(&body).Exec(ctx)
-
-	if err != nil {
-		fmt.Println("Database Error:", err)
+	if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Database Error: " + err.Error(),
 		})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message":   "Tiny URL created successfully",
-		"short_url": body.ShortUrl,
+	ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
+		Message:  "Tiny URL created successfully",
+		ShortURL: body.ShortUrl,
 	})
 }
 
