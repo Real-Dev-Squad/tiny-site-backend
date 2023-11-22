@@ -39,11 +39,6 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	body.ShortUrl = utils.GenerateMD5Hash(body.OriginalUrl)
 	body.CreatedAt = time.Now()
 
-	var existing models.Tinyurl
-	if err := db.NewSelect().Model(&existing).Where("short_url = ?", body.ShortUrl).Scan(ctx, &existing); err == nil {
-		body.ShortUrl = utils.GenerateMD5Hash(body.OriginalUrl + time.Now().String())
-	}
-
 	if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
 		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
 			Message: "Failed to insert into database: " + err.Error(),
