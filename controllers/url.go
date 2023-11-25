@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/Real-Dev-Squad/tiny-site-backend/dtos"
 	"github.com/Real-Dev-Squad/tiny-site-backend/models"
 	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
 	"github.com/gin-gonic/gin"
@@ -14,32 +14,24 @@ import (
 func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	var body models.Tinyurl
 
-	err := ctx.BindJSON(&body)
-
-	if err != nil {
-		fmt.Println("JSON Error:", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "JSON Error: " + err.Error(),
+	if err := ctx.BindJSON(&body); err != nil {
+		ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
+			Message: "Invalid JSON format: " + err.Error(),
 		})
 		return
 	}
 
 	if body.OriginalUrl == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "OrgUrl is required",
+		ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
+			Message: "original url is required",
 		})
 		return
 	}
 
-	err = db.NewSelect().
-		Model(&body).
-		Where("original_url = ?", body.OriginalUrl).
-		Scan(ctx, &body)
-
-	if err == nil {
-		ctx.JSON(http.StatusOK, gin.H{
-			"message":   "Tiny URL already exists",
-			"short_url": body.ShortUrl,
+	if err := db.NewSelect().Model(&body).Where("original_url = ?", body.OriginalUrl).Scan(ctx, &body); err == nil {
+		ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
+			Message:  "Tiny URL already exists",
+			ShortURL: body.ShortUrl,
 		})
 		return
 	}
@@ -47,19 +39,16 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	body.ShortUrl = utils.GenerateMD5Hash(body.OriginalUrl)
 	body.CreatedAt = time.Now()
 
-	_, err = db.NewInsert().Model(&body).Exec(ctx)
-
-	if err != nil {
-		fmt.Println("Database Error:", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Database Error: " + err.Error(),
+	if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
+		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+			Message: "Failed to insert into database: " + err.Error(),
 		})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message":   "Tiny URL created successfully",
-		"short_url": body.ShortUrl,
+	ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
+		Message:  "Tiny URL created successfully",
+		ShortURL: body.ShortUrl,
 	})
 }
 
@@ -72,8 +61,8 @@ func RedirectShortURL(ctx *gin.Context, db *bun.DB) {
 		Where("short_url = ?", shortURL).
 		Scan(ctx, &tinyURL)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": "Short URL not found",
+		ctx.JSON(http.StatusNotFound, dtos.URLDetailsResponse{
+			Message: "Short URL not found",
 		})
 		return
 	}
@@ -83,24 +72,32 @@ func RedirectShortURL(ctx *gin.Context, db *bun.DB) {
 
 func GetAllURLs(ctx *gin.Context, db *bun.DB) {
 	userID := ctx.Param("id")
-	var tinyURL []models.Tinyurl
+	var tinyURLs []models.Tinyurl
 
 	err := db.NewSelect().
-		Model(&tinyURL).
+		Model(&tinyURLs).
 		Where("user_id = ?", userID).
 		Order("created_at DESC").
-		Scan(ctx, &tinyURL)
+		Scan(ctx, &tinyURLs)
 
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": "No URLs found for the user",
+		ctx.JSON(http.StatusNotFound, dtos.UserURLsResponse{
+			Message: "No URLs found for the user",
 		})
 		return
 	}
+	var urlDetails []dtos.URLDetails
+	for _, tinyURL := range tinyURLs {
+		urlDetails = append(urlDetails, dtos.URLDetails{
+			OriginalURL: tinyURL.OriginalUrl,
+			ShortURL:    tinyURL.ShortUrl,
+			CreatedAt:   tinyURL.CreatedAt,
+		})
+	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "All URLs fetched successfully",
-		"urls":    tinyURL,
+	ctx.JSON(http.StatusOK, dtos.UserURLsResponse{
+		Message: "All URLs fetched successfully",
+		URLs:    urlDetails,
 	})
 }
 
@@ -114,14 +111,24 @@ func GetURLDetails(ctx *gin.Context, db *bun.DB) {
 		Scan(ctx, &tinyURL)
 
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": "No URLs found for the user",
+		ctx.JSON(http.StatusNotFound, dtos.URLDetailsResponse{
+			Message: "No URLs found for the user",
 		})
 		return
 	}
+	urlDetails := dtos.URLDetails{
+		ID:          tinyURL.ID,
+		OriginalURL: tinyURL.OriginalUrl,
+		ShortURL:    tinyURL.ShortUrl,
+		Comment:     tinyURL.Comment,
+		UserID:      tinyURL.UserID,
+		CreatedBy:   tinyURL.CreatedBy,
+		ExpiredAt:   tinyURL.ExpiredAt,
+		CreatedAt:   tinyURL.CreatedAt,
+	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "URL fetched successfully",
-		"url":     tinyURL,
+	ctx.JSON(http.StatusOK, dtos.URLDetailsResponse{
+		Message: "URL fetched successfully",
+		URL:     urlDetails,
 	})
 }
