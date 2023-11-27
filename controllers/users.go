@@ -57,8 +57,5 @@ func GetSelfUser(ctx *gin.Context, db *bun.DB) {
         return
     }
 
-    ctx.JSON(http.StatusOK, gin.H{
-        "message": "user fetched successfully",
-        "data":    user,
-    })
+    ctx.JSON(http.StatusOK, user)
 }

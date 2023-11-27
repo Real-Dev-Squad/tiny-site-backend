@@ -111,8 +111,8 @@ func GetURLDetails(ctx *gin.Context, db *bun.DB) {
 		Scan(ctx, &tinyURL)
 
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, dtos.URLDetailsResponse{
-			Message: "No URLs found for the user",
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"message": "No URLs found",
 		})
 		return
 	}
