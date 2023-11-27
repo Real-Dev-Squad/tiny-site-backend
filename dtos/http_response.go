@@ -25,3 +25,7 @@ type URLDetails struct {
 	ExpiredAt   time.Time `json:"expiredAt,omitempty"`
 	CreatedAt   time.Time `json:"createdAt,omitempty"`
 }
+
+type URLNotFoundResponse struct {
+	Message string `json:"message"`
+}
