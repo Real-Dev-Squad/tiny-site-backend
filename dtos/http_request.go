@@ -17,3 +17,7 @@ type UserURLsFetchRequest struct {
 type URLDetailsFetchRequest struct {
 	ShortURL string `uri:"shortURL" binding:"required"`
 }
+
+type UserByIDFetchRequest struct {
+	ID string `uri:"id" binding:"required"`
+}
