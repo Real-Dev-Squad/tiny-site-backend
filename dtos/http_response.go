@@ -29,3 +29,19 @@ type URLDetails struct {
 type URLNotFoundResponse struct {
 	Message string `json:"message"`
 }
+
+type UserListResponse struct {
+	Message string `json:"message"`
+	Data    []User `json:"data,omitempty"`
+}
+type UserResponse struct {
+	Message string `json:"message"`
+	Data    User   `json:"data,omitempty"`
+}
+
+type User struct {
+	ID        int64     `json:"id"`
+	UserName  string    `json:"userName"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"createdAt,omitempty"`
+}
