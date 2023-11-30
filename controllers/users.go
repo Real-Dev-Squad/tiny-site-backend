@@ -31,6 +31,7 @@ func GetUserList(ctx *gin.Context, db *bun.DB) {
 	for _, user := range users {
 		dtoUsers = append(dtoUsers, dtos.User{
 			ID:        user.ID,
+			UserName:  user.UserName,
 			Email:     user.Email,
 			CreatedAt: user.CreatedAt,
 		})
