@@ -66,6 +66,20 @@ func RedirectShortURL(ctx *gin.Context, db *bun.DB) {
 		})
 		return
 	}
+	tinyURL.AccessCount++
+	tinyURL.LastAccessedAt = time.Now()
+
+	_, err = db.NewUpdate().
+		Model(&tinyURL).
+		Column("access_count", "last_accessed_at").
+		WherePK().
+		Exec(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Failed to update access count and timestamp",
+		})
+		return
+	}
 
 	ctx.Redirect(http.StatusMovedPermanently, tinyURL.OriginalUrl)
 }
@@ -117,14 +131,16 @@ func GetURLDetails(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 	urlDetails := dtos.URLDetails{
-		ID:          tinyURL.ID,
-		OriginalURL: tinyURL.OriginalUrl,
-		ShortURL:    tinyURL.ShortUrl,
-		Comment:     tinyURL.Comment,
-		UserID:      tinyURL.UserID,
-		CreatedBy:   tinyURL.CreatedBy,
-		ExpiredAt:   tinyURL.ExpiredAt,
-		CreatedAt:   tinyURL.CreatedAt,
+		ID:             tinyURL.ID,
+		OriginalURL:    tinyURL.OriginalUrl,
+		ShortURL:       tinyURL.ShortUrl,
+		Comment:        tinyURL.Comment,
+		UserID:         tinyURL.UserID,
+		CreatedBy:      tinyURL.CreatedBy,
+		ExpiredAt:      tinyURL.ExpiredAt,
+		CreatedAt:      tinyURL.CreatedAt,
+		AccessCount:    tinyURL.AccessCount, // Include access count
+		LastAccessedAt: tinyURL.LastAccessedAt,
 	}
 
 	ctx.JSON(http.StatusOK, dtos.URLDetailsResponse{
