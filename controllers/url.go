@@ -37,7 +37,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	}
 
 	body.ShortUrl = utils.GenerateMD5Hash(body.OriginalUrl)
-	body.CreatedAt = time.Now()
+	body.CreatedAt = time.Now().UTC()
 
 	if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
 		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
@@ -67,7 +67,7 @@ func RedirectShortURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 	tinyURL.AccessCount++
-	tinyURL.LastAccessedAt = time.Now()
+	tinyURL.LastAccessedAt = time.Now().UTC()
 
 	_, err = db.NewUpdate().
 		Model(&tinyURL).
@@ -139,7 +139,7 @@ func GetURLDetails(ctx *gin.Context, db *bun.DB) {
 		CreatedBy:      tinyURL.CreatedBy,
 		ExpiredAt:      tinyURL.ExpiredAt,
 		CreatedAt:      tinyURL.CreatedAt,
-		AccessCount:    tinyURL.AccessCount, // Include access count
+		AccessCount:    tinyURL.AccessCount,
 		LastAccessedAt: tinyURL.LastAccessedAt,
 	}
 
