@@ -2,7 +2,8 @@ package dtos
 
 type URLCreationRequest struct {
 	OriginalURL string `json:"original_url"`
-	UserID      int    `json:"user_id"`
+	UserID      int64  `json:"user_id"`
+	CreatedBy   string `json:"created_by,omitempty"`
 	Comment     string `json:"comment,omitempty"`
 }
 

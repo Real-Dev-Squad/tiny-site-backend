@@ -4,46 +4,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"time"
 
 	"github.com/Real-Dev-Squad/tiny-site-backend/dtos"
-	"github.com/Real-Dev-Squad/tiny-site-backend/models"
 	"github.com/Real-Dev-Squad/tiny-site-backend/routes"
-	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/uptrace/bun"
 )
-
-var db *bun.DB
-
-func TestMain(m *testing.M) {
-	utils.LoadEnv("../../.env")
-	dsn := os.Getenv("TEST_DB_URL")
-	db = utils.SetupDBConnection(dsn)
-
-	defer db.Close()
-
-	code := m.Run()
-
-	os.Exit(code)
-}
-
-func generateValidAuthToken() string {
-	user := &models.User{
-		UserName: "testuser",
-		Email:    "test@example.com",
-	}
-
-	token, err := utils.GenerateToken(user)
-	if err != nil {
-		panic(err)
-	}
-
-	return token
-}
 
 func TestGetUsers(t *testing.T) {
 	router := gin.Default()
