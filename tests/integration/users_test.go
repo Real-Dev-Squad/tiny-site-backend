@@ -14,21 +14,24 @@ import (
 )
 
 func TestGetUsers(t *testing.T) {
-	router := gin.Default()
-	routes.UserRoutes(router.Group("/v1"), db)
+    router := gin.Default()
+    routes.UserRoutes(router.Group("/v1"), db)
 
-	w := httptest.NewRecorder()
+    w := httptest.NewRecorder()
 
-	token := generateValidAuthToken()
+    token := generateValidAuthToken()
+    if token == "" {
+        t.Fatal("Failed to generate valid auth token")
+    }
 
-	req, err := http.NewRequest("GET", "/v1/users", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+    req, err := http.NewRequest("GET", "/v1/users", nil)
+    if err != nil {
+        t.Fatal(err)
+    }
 
-	req.AddCookie(&http.Cookie{Name: "token", Value: token})
+    req.AddCookie(&http.Cookie{Name: "token", Value: token})
 
-	router.ServeHTTP(w, req)
+    router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("Expected status code %d but got %d", http.StatusOK, w.Code)
