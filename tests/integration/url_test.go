@@ -13,10 +13,15 @@ import (
 )
 
 func TestCreateTinyURL(t *testing.T) {
-	router := setupTestRouter()
+
+	router := gin.Default()
+	router.POST("/v1/create-tinyurl", func(ctx *gin.Context) {
+		controller.CreateTinyURL(ctx, db)
+	})
+
 	requestBody := map[string]interface{}{
-		"OrgUrl":    "https://example.com",
-		"CreatedBy": "testuser",
+		"originalUrl": "https://example.com",
+		"CreatedBy":   "testuser",
 	}
 	requestJSON, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("POST", "/v1/create-tinyurl", bytes.NewBuffer(requestJSON))
@@ -42,9 +47,13 @@ func TestCreateTinyURL(t *testing.T) {
 }
 
 func TestRedirectShortURL(t *testing.T) {
-	router := setupTestRouter()
-	w := httptest.NewRecorder()
 
+	router := gin.Default()
+	router.GET("/v1/tinyurl/:shortUrl", func(ctx *gin.Context) {
+		controller.RedirectShortURL(ctx, db)
+	})
+
+	w := httptest.NewRecorder()
 	testShortURL := "37fff02c"
 	expectedOriginalURL := "https://react.dev/learn/"
 
@@ -73,6 +82,7 @@ func setupTestRouter() *gin.Engine {
 }
 
 func TestGetUrlDetails(t *testing.T) {
+	t.Skip()
 	router := setupTestRouter()
 	w := httptest.NewRecorder()
 

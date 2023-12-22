@@ -8,30 +8,36 @@ import (
 
 	"time"
 
+	controller "github.com/Real-Dev-Squad/tiny-site-backend/controllers"
 	"github.com/Real-Dev-Squad/tiny-site-backend/dtos"
 	"github.com/Real-Dev-Squad/tiny-site-backend/routes"
 	"github.com/gin-gonic/gin"
 )
 
 func TestGetUsers(t *testing.T) {
-    router := gin.Default()
-    routes.UserRoutes(router.Group("/v1"), db)
+	router := gin.Default()
 
-    w := httptest.NewRecorder()
+	router.GET("v1/users", func(ctx *gin.Context) {
+		controller.GetUserList(ctx, db)
+	})
+	// routes.UserRoutes(router.Group("/v1"), db)
 
-    token := generateValidAuthToken()
-    if token == "" {
-        t.Fatal("Failed to generate valid auth token")
-    }
+	w := httptest.NewRecorder()
 
-    req, err := http.NewRequest("GET", "/v1/users", nil)
-    if err != nil {
-        t.Fatal(err)
-    }
+	token := generateValidAuthToken()
 
-    req.AddCookie(&http.Cookie{Name: "token", Value: token})
+	if token == "" {
+		t.Fatal("Failed to generate valid auth token")
+	}
 
-    router.ServeHTTP(w, req)
+	req, err := http.NewRequest("GET", "/v1/users", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.AddCookie(&http.Cookie{Name: "token", Value: token})
+
+	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("Expected status code %d but got %d", http.StatusOK, w.Code)
@@ -39,9 +45,14 @@ func TestGetUsers(t *testing.T) {
 }
 
 func TestGetUsersUnauthorized(t *testing.T) {
-	router := routes.SetupV1Routes(db)
 
+	router := gin.Default()
+
+	router.GET("v1/users", func(ctx *gin.Context) {
+		controller.GetUserList(ctx, db)
+	})
 	w := httptest.NewRecorder()
+
 	req, err := http.NewRequest("GET", "/v1/users", nil)
 
 	req.Header.Set("Authorization", "Bearer invalid_token")

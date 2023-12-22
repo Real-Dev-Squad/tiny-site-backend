@@ -18,40 +18,40 @@ import (
 var db *bun.DB
 
 func TestMain(m *testing.M) {
-    ctx := context.Background()
-    os.Setenv("JWT_ISSUER", "test_issuer")
-    os.Setenv("JWT_SECRET", "test_secret")
-    os.Setenv("JWT_VALIDITY_IN_HOURS", "244")
-    req := testcontainers.ContainerRequest{
-        Image:        "postgres:latest",
-        ExposedPorts: []string{"5432/tcp"},
-        Env:          map[string]string{"POSTGRES_PASSWORD": "password"},
-        WaitingFor:   wait.ForLog("database system is ready to accept connections"),
-    }
+	ctx := context.Background()
+	os.Setenv("JWT_ISSUER", "test_issuer")
+	os.Setenv("JWT_SECRET", "test_secret")
+	os.Setenv("JWT_VALIDITY_IN_HOURS", "244")
+	req := testcontainers.ContainerRequest{
+		Image:        "postgres:latest",
+		ExposedPorts: []string{"5432/tcp"},
+		Env:          map[string]string{"POSTGRES_PASSWORD": "password"},
+		WaitingFor:   wait.ForLog("database system is ready to accept connections"),
+	}
 
-    postgresContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-        ContainerRequest: req,
-        Started:          true,
-    })
-    if err != nil {
-        log.Fatalf("Failed to start container: %s", err)
-    }
-    defer postgresContainer.Terminate(ctx)
+	postgresContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	if err != nil {
+		log.Fatalf("Failed to start container: %s", err)
+	}
+	defer postgresContainer.Terminate(ctx)
 
-    // Retrieve the container's mapped port
-    port, _ := postgresContainer.MappedPort(ctx, "5432")
-    testDBURL := fmt.Sprintf("postgres://postgres:password@localhost:%s/postgres?sslmode=disable", port.Port())
-    log.Println("Test DB URL:", testDBURL)
-    log.Println("JWT_ISSUER:", os.Getenv("JWT_ISSUER"))
-    log.Println("JWT_SECRET:", os.Getenv("JWT_SECRET"))
-    log.Println("JWT_VALIDITY_IN_HOURS:", os.Getenv("JWT_VALIDITY_IN_HOURS"))
-    // Set up the database connection
-    db = utils.SetupDBConnection(testDBURL)
+	// Retrieve the container's mapped port
+	port, _ := postgresContainer.MappedPort(ctx, "5432")
+	testDBURL := fmt.Sprintf("postgres://postgres:password@localhost:%s/postgres?sslmode=disable", port.Port())
+	log.Println("Test DB URL:", testDBURL)
+	log.Println("JWT_ISSUER:", os.Getenv("JWT_ISSUER"))
+	log.Println("JWT_SECRET:", os.Getenv("JWT_SECRET"))
+	log.Println("JWT_VALIDITY_IN_HOURS:", os.Getenv("JWT_VALIDITY_IN_HOURS"))
+	// Set up the database connection
+	db = utils.SetupDBConnection(testDBURL)
 
-    code := m.Run()
+	code := m.Run()
 
-    db.Close()
-    os.Exit(code)
+	db.Close()
+	os.Exit(code)
 }
 
 func generateValidAuthToken() string {
