@@ -5,12 +5,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Real-Dev-Squad/tiny-site-backend/routes"
+	"github.com/gin-gonic/gin"
 )
 
 func TestLogout(t *testing.T) {
 	t.Skip()
-	router := routes.SetupV1Routes(db)
+	router := gin.Default()
+
 	router.GET("/v1/auth/logout")
 
 	w := httptest.NewRecorder()
@@ -30,7 +31,8 @@ func TestLogout(t *testing.T) {
 func TestLogin(t *testing.T) {
 	t.Skip()
 
-	router := routes.SetupV1Routes(db)
+	router := gin.Default()
+
 
 	w := httptest.NewRecorder()
 	req, err := http.NewRequest("GET", "/v1/auth/google/login", nil)
@@ -49,7 +51,8 @@ func TestLogin(t *testing.T) {
 func TestCallback(t *testing.T) {
 	t.Skip()
 
-	router := routes.SetupV1Routes(db)
+	router := gin.Default()
+
 
 	w := httptest.NewRecorder()
 	req, err := http.NewRequest("GET", "/v1/auth/google/callback", nil)
