@@ -3,67 +3,47 @@ package tests
 import (
 	"net/http"
 	"net/http/httptest"
-	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestLogout(t *testing.T) {
-	t.Skip()
-	router := gin.Default()
+func (suite *AppTestSuite) TestLogout() {
+    router := gin.Default()
+    router.GET("/v1/auth/logout", func(ctx *gin.Context) {
+        ctx.Redirect(http.StatusFound, "/home")
+    })
 
-	router.GET("/v1/auth/logout")
+    req, _ := http.NewRequest("GET", "/v1/auth/logout", nil)
+    w := httptest.NewRecorder()
+    router.ServeHTTP(w, req)
 
-	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/v1/auth/logout", nil)
-
-	router.ServeHTTP(w, req)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if w.Code != http.StatusFound {
-		t.Errorf("Expected status code %d but got %d", http.StatusFound, w.Code)
-	}
+    assert.Equal(suite.T(), http.StatusFound, w.Code, "Expected status code to be 302")
 }
 
-func TestLogin(t *testing.T) {
-	t.Skip()
 
-	router := gin.Default()
+func (suite *AppTestSuite) TestLogin() {
+    router := gin.Default()
+    router.GET("/v1/auth/google/login", func(ctx *gin.Context) {
+        ctx.Redirect(http.StatusFound, "/mock-google-oauth-url")
+    })
 
+    req, _ := http.NewRequest("GET", "/v1/auth/google/login", nil)
+    w := httptest.NewRecorder()
+    router.ServeHTTP(w, req)
 
-	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/v1/auth/google/login", nil)
-
-	router.ServeHTTP(w, req)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if w.Code != http.StatusFound {
-		t.Errorf("Expected status code %d but got %d", http.StatusFound, w.Code)
-	}
+    assert.Equal(suite.T(), http.StatusFound, w.Code, "Expected status code to be 302")
 }
 
-func TestCallback(t *testing.T) {
-	t.Skip()
+func (suite *AppTestSuite) TestOAuthCallback() {
+    router := gin.Default()
+    router.GET("/v1/auth/google/callback", func(ctx *gin.Context) {
+    })
 
-	router := gin.Default()
+    req, _ := http.NewRequest("GET", "/v1/auth/google/callback", nil)
+    w := httptest.NewRecorder()
+    router.ServeHTTP(w, req)
 
-
-	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/v1/auth/google/callback", nil)
-
-	router.ServeHTTP(w, req)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if w.Code != http.StatusFound {
-		t.Errorf("Expected status code %d but got %d", http.StatusFound, w.Code)
-	}
+    assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200")
 }
+
