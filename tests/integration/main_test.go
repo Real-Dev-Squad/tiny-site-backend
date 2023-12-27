@@ -26,17 +26,13 @@ func (suite *AppTestSuite) SetupSuite() {
 	os.Setenv("JWT_SECRET", "test_secret")
 	os.Setenv("JWT_VALIDITY_IN_HOURS", "244")
 
-	// Create and start the PostgreSQL container.
 	var err error
 	suite.pgContainer, err = testhelpers.CreatePostgresContainer(ctx)
 	if err != nil {
 		log.Fatalf("Failed to create PostgreSQL container: %s", err)
 	}
 
-	// Set up the database connection.
 	suite.db = utils.SetupDBConnection(suite.pgContainer.ConnectionString)
-
-	// Any other setup needed before tests run can go here.
 }
 
 // TearDownSuite runs once after all the tests in the suite have finished.
@@ -46,11 +42,10 @@ func (suite *AppTestSuite) TearDownSuite() {
 		log.Fatalf("Failed to terminate PostgreSQL container: %s", err)
 	}
 
-	// Close the database connection.
 	suite.db.Close()
 }
 
-// This function simply runs the test suite.
+// This function runs the test suite.
 func TestAppTestSuite(t *testing.T) {
 	suite.Run(t, new(AppTestSuite))
 }
