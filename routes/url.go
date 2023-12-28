@@ -21,4 +21,7 @@ func TinyURLRoutes(rg *gin.RouterGroup, db *bun.DB) {
 	urls.GET("/:shortURL", func(ctx *gin.Context) {
 		controller.GetURLDetails(ctx, db)
 	})
+	urls.GET("", func(ctx *gin.Context) {
+        controller.GetURLDetails(ctx, db)
+    })
 }
