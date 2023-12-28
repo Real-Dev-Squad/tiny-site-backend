@@ -1,4 +1,3 @@
-// main_test.go in the integration folder
 package tests
 
 import (
@@ -45,7 +44,6 @@ func (suite *AppTestSuite) TearDownSuite() {
 	suite.db.Close()
 }
 
-// This function runs the test suite.
 func TestAppTestSuite(t *testing.T) {
 	suite.Run(t, new(AppTestSuite))
 }
