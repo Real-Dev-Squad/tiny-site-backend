@@ -17,4 +17,5 @@ type User struct {
 	IsOnboarding bool      `bun:"is_onboarding,default:true" json:"isOnboarding"`
 	CreatedAt    time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt    time.Time `bun:"updated_at,nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+	IsDeleted bool `bun:"is_deleted,default:false" json:"isDeleted"`
 }

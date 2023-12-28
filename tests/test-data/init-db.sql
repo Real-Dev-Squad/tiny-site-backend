@@ -4,18 +4,18 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS users (
   id bigserial PRIMARY KEY,
   username varchar(256) UNIQUE NOT NULL,
-  email varchar UNIQUE NOT NULL,
+  email varchar(255) UNIQUE NOT NULL,
   is_verified boolean DEFAULT false,
   password varchar(128) NOT NULL,
-  created_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC'),
-  updated_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC'),
   is_deleted boolean DEFAULT false,
-  is_onboarding BOOLEAN NOT NULL DEFAULT TRUE
+  is_onboarding BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at timestamp WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'UTC'),
+  updated_at timestamp WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'UTC')
 );
 
 -- Insert data into the users table
-INSERT INTO users (id, username, email, is_verified, password, is_onboarding)
-VALUES (1, 'JohnDoe', 'john.doe@example.com', true, 'hashed_password', true);
+INSERT INTO users (username, email, is_verified, password, is_onboarding)
+VALUES ('JohnDoe', 'john.doe@example.com', true, 'hashed_password', true);
 
 -- Create tiny_url table if not exists
 CREATE TABLE IF NOT EXISTS tiny_url (
@@ -24,13 +24,13 @@ CREATE TABLE IF NOT EXISTS tiny_url (
   short_url text UNIQUE NOT NULL,
   comment text,
   user_id int NOT NULL REFERENCES users(id), 
-  expired_at timestamp NOT NULL,
-  created_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC'),
+  expired_at timestamp WITH TIME ZONE NOT NULL, -- Consider allowing NULL or setting a default
+  created_at timestamp WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'UTC'),
   created_by text NOT NULL
 );
 
 -- Insert data into the tiny_url table
-INSERT INTO tiny_url ( id, original_url, short_url, comment, user_id, expired_at, created_by)
-VALUES (1, 'https://www.example.com', '37fff02c', 'Some comment', 1, '2023-01-01', 'JohnDoe');
+INSERT INTO tiny_url (original_url, short_url, comment, user_id, expired_at, created_by)
+VALUES ('https://www.example.com/1', '37fff02c', 'Some comment', 1, '2023-01-01T00:00:00Z', 'JohnDoe');
 
 COMMIT;

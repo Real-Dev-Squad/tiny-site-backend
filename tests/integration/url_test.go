@@ -35,7 +35,7 @@ func (suite *AppTestSuite) TestCreateTinyURL() {
 func (suite *AppTestSuite) TestRedirectShortURL() {
 	router := gin.Default()
 	router.GET("/v1/tinyurl/:shortUrl", func(ctx *gin.Context) {
-		controller.RedirectShortURL(ctx, suite.db) // Use the db from the suite.
+		controller.RedirectShortURL(ctx, suite.db)
 	})
 
 	req, _ := http.NewRequest("GET", "/v1/tinyurl/37fff02c", nil)
@@ -57,6 +57,22 @@ func (suite *AppTestSuite) TestGetAllURLs() {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
+	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200")
+}
+
+func (suite *AppTestSuite) TestGetURLDetails() {
+	router := gin.Default()
+	router.GET("/v1/urls/:shortUrl", func(ctx *gin.Context) {
+		controller.GetURLDetails(ctx, suite.db)
+	})
+
+	req, _ := http.NewRequest("GET", "/v1/urls/37fff02c", nil)
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	suite.T().Logf("Response Code: %d, Body: %s", w.Code, w.Body.String())
 	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200")
 }
 
