@@ -16,14 +16,16 @@ type URLDetailsResponse struct {
 	URL     URLDetails `json:"url,omitempty"`
 }
 type URLDetails struct {
-	ID          int64     `json:"id"`
-	OriginalURL string    `json:"originalUrl"`
-	ShortURL    string    `json:"shortUrl"`
-	Comment     string    `json:"comment,omitempty"`
-	UserID      int64     `json:"userId"`
-	CreatedBy   string    `json:"createdBy"`
-	ExpiredAt   time.Time `json:"expiredAt,omitempty"`
-	CreatedAt   time.Time `json:"createdAt,omitempty"`
+	ID             int64     `json:"id"`
+	OriginalURL    string    `json:"originalUrl"`
+	ShortURL       string    `json:"shortUrl"`
+	Comment        string    `json:"comment,omitempty"`
+	UserID         int64     `json:"userId"`
+	CreatedBy      string    `json:"createdBy"`
+	ExpiredAt      time.Time `json:"expiredAt,omitempty"`
+	CreatedAt      time.Time `json:"createdAt,omitempty"`
+	AccessCount    int64     `json:"accessCount"`
+	LastAccessedAt time.Time `json:"lastAccessedAt"`
 }
 
 type URLNotFoundResponse struct {

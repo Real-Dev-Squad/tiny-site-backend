@@ -37,7 +37,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	}
 
 	body.ShortUrl = utils.GenerateMD5Hash(body.OriginalUrl)
-	body.CreatedAt = time.Now()
+	body.CreatedAt = time.Now().UTC()
 
 	if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
 		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
@@ -63,6 +63,20 @@ func RedirectShortURL(ctx *gin.Context, db *bun.DB) {
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, dtos.URLDetailsResponse{
 			Message: "Short URL not found",
+		})
+		return
+	}
+	tinyURL.AccessCount++
+	tinyURL.LastAccessedAt = time.Now().UTC()
+
+	_, err = db.NewUpdate().
+		Model(&tinyURL).
+		Column("access_count", "last_accessed_at").
+		WherePK().
+		Exec(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Failed to update access count and timestamp",
 		})
 		return
 	}
@@ -117,14 +131,16 @@ func GetURLDetails(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 	urlDetails := dtos.URLDetails{
-		ID:          tinyURL.ID,
-		OriginalURL: tinyURL.OriginalUrl,
-		ShortURL:    tinyURL.ShortUrl,
-		Comment:     tinyURL.Comment,
-		UserID:      tinyURL.UserID,
-		CreatedBy:   tinyURL.CreatedBy,
-		ExpiredAt:   tinyURL.ExpiredAt,
-		CreatedAt:   tinyURL.CreatedAt,
+		ID:             tinyURL.ID,
+		OriginalURL:    tinyURL.OriginalUrl,
+		ShortURL:       tinyURL.ShortUrl,
+		Comment:        tinyURL.Comment,
+		UserID:         tinyURL.UserID,
+		CreatedBy:      tinyURL.CreatedBy,
+		ExpiredAt:      tinyURL.ExpiredAt,
+		CreatedAt:      tinyURL.CreatedAt,
+		AccessCount:    tinyURL.AccessCount,
+		LastAccessedAt: tinyURL.LastAccessedAt,
 	}
 
 	ctx.JSON(http.StatusOK, dtos.URLDetailsResponse{
