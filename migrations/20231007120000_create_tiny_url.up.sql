@@ -8,7 +8,9 @@ CREATE TABLE tiny_url (
   user_id int NOT NULL REFERENCES users(id), 
   expired_at timestamp NOT NULL,
   created_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC'),
-  created_by text NOT NULL
+  created_by text NOT NULL,
+  access_count bigint DEFAULT 0,
+  last_accessed_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC')
 );
 
 COMMIT;
