@@ -26,11 +26,13 @@ CREATE TABLE IF NOT EXISTS tiny_url (
   user_id int NOT NULL REFERENCES users(id), 
   expired_at timestamp WITH TIME ZONE NOT NULL, -- Consider allowing NULL or setting a default
   created_at timestamp WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'UTC'),
-  created_by text NOT NULL
+  created_by text NOT NULL,
+  access_count bigint DEFAULT 0,
+  last_accessed_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC')
 );
 
 -- Insert data into the tiny_url table
-INSERT INTO tiny_url (original_url, short_url, comment, user_id, expired_at, created_by)
-VALUES ('https://www.example.com/1', '37fff02c', 'Some comment', 1, '2023-01-01T00:00:00Z', 'JohnDoe');
+INSERT INTO tiny_url (original_url, short_url, comment, user_id, expired_at, created_by, access_count, last_accessed_at)
+VALUES ('https://www.example.com/1', '37fff02c', 'Some comment', 1, '2023-01-01T00:00:00Z', 'JohnDoe', 0, '2023-01-01T00:00:00Z');
 
 COMMIT;

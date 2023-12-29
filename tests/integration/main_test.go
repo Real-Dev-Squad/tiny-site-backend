@@ -3,7 +3,6 @@ package tests
 import (
 	"context"
 	"log"
-	"os"
 	"testing"
 
 	"github.com/Real-Dev-Squad/tiny-site-backend/tests/testhelpers"
@@ -21,9 +20,6 @@ type AppTestSuite struct {
 // SetupSuite runs once before the suite starts and sets up the test environment.
 func (suite *AppTestSuite) SetupSuite() {
 	ctx := context.Background()
-	os.Setenv("JWT_ISSUER", "test_issuer")
-	os.Setenv("JWT_SECRET", "test_secret")
-	os.Setenv("JWT_VALIDITY_IN_HOURS", "244")
 
 	var err error
 	suite.pgContainer, err = testhelpers.CreatePostgresContainer(ctx)
