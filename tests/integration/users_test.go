@@ -45,6 +45,20 @@ func (suite *AppTestSuite) TestGetUserByID() {
     assert.Equal(suite.T(), http.StatusNotFound, wNotFound.Code, "Expected status code to be 404 for non-existing user")
 }
 
+
+func (suite *AppTestSuite) TestGetUserByIDNonExistent() {
+    router := gin.Default()
+    router.GET("/v1/users/:id", func(ctx *gin.Context) {
+        controller.GetUserByID(ctx, suite.db)
+    })
+    
+    req, _ := http.NewRequest("GET", "/v1/users/999", nil) 
+    w := httptest.NewRecorder()
+    router.ServeHTTP(w, req)
+    
+    assert.Equal(suite.T(), http.StatusNotFound, w.Code, "Expected status code to be 404 for non-existing user ID")
+}
+
 func (suite *AppTestSuite) TestGetSelfUser() {
     router := gin.Default()
     userEmail := "john.doe@example.com"
@@ -66,19 +80,20 @@ func (suite *AppTestSuite) TestGetSelfUser() {
 
 func (suite *AppTestSuite) TestFailedGetSelfUser() {
     router := gin.Default()
-    userEmail := "nonexisting@example.com" 
+    userEmail := "nonexisting@example.com"
 
     router.GET("/v1/users/self", func(ctx *gin.Context) {
         ctx.Set("user", userEmail)
         controller.GetSelfUser(ctx, suite.db)
     })
     
-    reqNotFound, _ := http.NewRequest("GET", "/v1/users/self", nil)
-    reqNotFound.Header.Set("user", "nonexistent@example.com") 
+    req, _ := http.NewRequest("GET", "/v1/users/self", nil)
+    req.Header.Set("user", userEmail)
     
-    wNotFound := httptest.NewRecorder()
-    router.ServeHTTP(wNotFound, reqNotFound)
+    w := httptest.NewRecorder()
+    router.ServeHTTP(w, req)
     
-    assert.Equal(suite.T(), http.StatusNotFound, wNotFound.Code, "Expected status code to be 404 for non-existing user")
+    assert.Equal(suite.T(), http.StatusNotFound, w.Code, "Expected status code to be 404 for non-existing user")
 }
+
 
