@@ -9,91 +9,86 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func (suite *AppTestSuite) TestGetUsers() {
+// TestGetUsers_Success tests the retrieval of a list of users and expects a successful response.
+func (suite *AppTestSuite) TestGetUsers_Success() {
+	// Setup the router and route
 	router := gin.Default()
-
 	router.GET("/v1/users", func(ctx *gin.Context) {
 		controller.GetUserList(ctx, suite.db) 
 	})
 
+	// Create a request and recorder to test the endpoint
 	req, _ := http.NewRequest("GET", "/v1/users", nil)
 	w := httptest.NewRecorder()
 
 	router.ServeHTTP(w, req)
-
-	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200")
+	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for successful user retrieval")
 }
 
-func (suite *AppTestSuite) TestGetUserByID() {
-    router := gin.Default()
-    userID := "1" 
-    
-    router.GET("/v1/users/:id", func(ctx *gin.Context) {
-        controller.GetUserByID(ctx, suite.db)
-    })
-    
-    req, _ := http.NewRequest("GET", "/v1/users/"+userID, nil)
-    w := httptest.NewRecorder()
-    router.ServeHTTP(w, req)
-    
-    assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for existing user")
-    
-    reqNotFound, _ := http.NewRequest("GET", "/v1/users/nonexistent", nil)
-    wNotFound := httptest.NewRecorder()
-    router.ServeHTTP(wNotFound, reqNotFound)
-    
-    assert.Equal(suite.T(), http.StatusNotFound, wNotFound.Code, "Expected status code to be 404 for non-existing user")
+// TestGetUserByID_ExistingUser tests the retrieval of a user by ID for an existing user and expects a successful response.
+func (suite *AppTestSuite) TestGetUserByID_ExistingUser() {
+	router := gin.Default()
+	userID := "1" 
+
+	router.GET("/v1/users/:id", func(ctx *gin.Context) {
+		controller.GetUserByID(ctx, suite.db)
+	})
+	
+	req, _ := http.NewRequest("GET", "/v1/users/"+userID, nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for existing user")
 }
 
+// TestGetUserByID_NonExistent tests the retrieval of a user by ID for a non-existing user and expects a not found response.
+func (suite *AppTestSuite) TestGetUserByID_NonExistent() {
+	router := gin.Default()
+	router.GET("/v1/users/:id", func(ctx *gin.Context) {
+		controller.GetUserByID(ctx, suite.db)
+	})
+	
+	req, _ := http.NewRequest("GET", "/v1/users/999", nil) 
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
 
-func (suite *AppTestSuite) TestGetUserByIDNonExistent() {
-    router := gin.Default()
-    router.GET("/v1/users/:id", func(ctx *gin.Context) {
-        controller.GetUserByID(ctx, suite.db)
-    })
-    
-    req, _ := http.NewRequest("GET", "/v1/users/999", nil) 
-    w := httptest.NewRecorder()
-    router.ServeHTTP(w, req)
-    
-    assert.Equal(suite.T(), http.StatusNotFound, w.Code, "Expected status code to be 404 for non-existing user ID")
+	assert.Equal(suite.T(), http.StatusNotFound, w.Code, "Expected status code to be 404 for non-existing user ID")
 }
 
-func (suite *AppTestSuite) TestGetSelfUser() {
-    router := gin.Default()
-    userEmail := "john.doe@example.com"
+// TestGetSelfUser_ExistingUser tests the retrieval of the user's own profile with valid credentials and expects a successful response.
+func (suite *AppTestSuite) TestGetSelfUser_ExistingUser() {
+	router := gin.Default()
+	userEmail := "john.doe@example.com"
 
-    router.GET("/v1/users/self", func(ctx *gin.Context) {
-        ctx.Set("user", userEmail)
-        controller.GetSelfUser(ctx, suite.db)
-    })
-    
+	router.GET("/v1/users/self", func(ctx *gin.Context) {
+		ctx.Set("user", userEmail)
+		controller.GetSelfUser(ctx, suite.db)
+	})
+	
 	req, _ := http.NewRequest("GET", "/v1/users/self", nil)
-    req.Header.Set("user", "john.doe@example.com")
+	req.Header.Set("user", userEmail)
     
-    w := httptest.NewRecorder()
-    router.ServeHTTP(w, req)
-    
-    assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for existing user")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
 
+	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for existing user")
 }
 
-func (suite *AppTestSuite) TestFailedGetSelfUser() {
-    router := gin.Default()
-    userEmail := "nonexisting@example.com"
+// TestGetSelfUser_NonExistingUser tests the retrieval of the user's own profile with invalid credentials and expects a not found response.
+func (suite *AppTestSuite) TestGetSelfUser_NonExistingUser() {
+	router := gin.Default()
+	userEmail := "nonexisting@example.com"
 
-    router.GET("/v1/users/self", func(ctx *gin.Context) {
-        ctx.Set("user", userEmail)
-        controller.GetSelfUser(ctx, suite.db)
-    })
+	router.GET("/v1/users/self", func(ctx *gin.Context) {
+		ctx.Set("user", userEmail)
+		controller.GetSelfUser(ctx, suite.db)
+	})
+	
+	req, _ := http.NewRequest("GET", "/v1/users/self", nil)
+	req.Header.Set("user", userEmail)
     
-    req, _ := http.NewRequest("GET", "/v1/users/self", nil)
-    req.Header.Set("user", userEmail)
-    
-    w := httptest.NewRecorder()
-    router.ServeHTTP(w, req)
-    
-    assert.Equal(suite.T(), http.StatusNotFound, w.Code, "Expected status code to be 404 for non-existing user")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusNotFound, w.Code, "Expected status code to be 404 for non-existing user")
 }
-
-
