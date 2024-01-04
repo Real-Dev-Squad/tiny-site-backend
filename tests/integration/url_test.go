@@ -12,17 +12,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestCreateTinyURL_Success tests the creation of a tiny URL with valid data and expects a successful response.
-func (suite *AppTestSuite) TestCreateTinyURL_Success() {
+// TestCreateTinyURLSuccess tests the successful creation of a tiny URL with valid data.
+func (suite *AppTestSuite) TestCreateTinyURLSuccess() {
 	// Setup the router and route for creating a tiny URL
 	router := gin.Default()
 	router.POST("/v1/tinyurl", func(ctx *gin.Context) {
 		controller.CreateTinyURL(ctx, suite.db)
 	})
 
+	// Prepare a request with valid data and a recorder to test the endpoint
 	requestBody := map[string]interface{}{
 		"OriginalUrl": "https://example.com",
-		"UserId":      1, 
+		"UserId":      1,
 	}
 	requestJSON, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("POST", "/v1/tinyurl", bytes.NewBuffer(requestJSON))
@@ -30,12 +31,13 @@ func (suite *AppTestSuite) TestCreateTinyURL_Success() {
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
-	suite.T().Logf("Response Code: %d, Body: %s", w.Code, w.Body.String())
+
+	// Assert the status code is 200 for successful tiny URL creation
 	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for successful tiny URL creation")
 }
 
-// TestCreateTinyURL_InvalidJSON tests the creation of a tiny URL with invalid JSON and expects a bad request response.
-func (suite *AppTestSuite) TestCreateTinyURL_InvalidJSON() {
+// TestCreateTinyURLInvalidJSON tests the creation of a tiny URL with invalid JSON and expects a bad request response.
+func (suite *AppTestSuite) TestCreateTinyURLInvalidJSON() {
 	// Setup the router and route for creating a tiny URL
 	router := gin.Default()
 	router.POST("/v1/tinyurl", func(ctx *gin.Context) {
@@ -49,17 +51,19 @@ func (suite *AppTestSuite) TestCreateTinyURL_InvalidJSON() {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
+	// Assert the status code is 400 for invalid JSON
 	assert.Equal(suite.T(), http.StatusBadRequest, w.Code, "Expected status code to be 400 for invalid JSON")
 }
 
-// TestCreateTinyURL_EmptyOriginalURL tests the creation of a tiny URL with an empty original URL and expects a bad request response.
-func (suite *AppTestSuite) TestCreateTinyURL_EmptyOriginalURL() {
+// TestCreateTinyURLEmptyOriginalURL tests the creation of a tiny URL with an empty original URL and expects a bad request response.
+func (suite *AppTestSuite) TestCreateTinyURLEmptyOriginalURL() {
 	// Setup the router and route for creating a tiny URL
 	router := gin.Default()
 	router.POST("/v1/tinyurl", func(ctx *gin.Context) {
 		controller.CreateTinyURL(ctx, suite.db)
 	})
 
+	// Prepare a request with an empty original URL and a recorder to test the endpoint
 	requestBody := map[string]interface{}{
 		"OriginalUrl": "",
 		"UserId":      1,
@@ -71,11 +75,12 @@ func (suite *AppTestSuite) TestCreateTinyURL_EmptyOriginalURL() {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
+	// Assert the status code is 400 for empty original URL
 	assert.Equal(suite.T(), http.StatusBadRequest, w.Code, "Expected status code to be 400 for empty original URL")
 }
 
-// TestRedirectShortURL_Success tests the redirection of a short URL to the original URL and expects a moved permanently response.
-func (suite *AppTestSuite) TestRedirectShortURL_Success() {
+// TestRedirectShortURLSuccess tests the successful redirection of a short URL to the original URL.
+func (suite *AppTestSuite) TestRedirectShortURLSuccess() {
 	router := gin.Default()
 	router.GET("/v1/tinyurl/:shortURL", func(ctx *gin.Context) {
 		controller.RedirectShortURL(ctx, suite.db)
@@ -86,11 +91,12 @@ func (suite *AppTestSuite) TestRedirectShortURL_Success() {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
+	// Assert the status code is 301 for successful redirection
 	assert.Equal(suite.T(), http.StatusMovedPermanently, w.Code, "Expected status code to be 301 for successful redirection")
 }
 
-// TestRedirectShortURL_NotFound tests the redirection of a non-existent short URL and expects a not found response.
-func (suite *AppTestSuite) TestRedirectShortURL_NotFound() {
+// TestRedirectShortURLNotFound tests the redirection of a non-existent short URL and expects a not found response.
+func (suite *AppTestSuite) TestRedirectShortURLNotFound() {
 	router := gin.Default()
 	router.GET("/v1/tinyurl/:shortURL", func(ctx *gin.Context) {
 		controller.RedirectShortURL(ctx, suite.db)
@@ -101,11 +107,12 @@ func (suite *AppTestSuite) TestRedirectShortURL_NotFound() {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
+	// Assert the status code is 404 for non-existent short URL
 	assert.Equal(suite.T(), http.StatusNotFound, w.Code, "Expected status code to be 404 for non-existent short URL")
 }
 
-// TestGetAllURLs_Success tests the retrieval of all URLs for a user and expects a successful response.
-func (suite *AppTestSuite) TestGetAllURLs_Success() {
+// TestGetAllURLsSuccess tests the successful retrieval of all URLs for a user.
+func (suite *AppTestSuite) TestGetAllURLsSuccess() {
 	router := gin.Default()
 	router.GET("/v1/user/:id/urls", func(ctx *gin.Context) {
 		controller.GetAllURLs(ctx, suite.db)
@@ -116,14 +123,15 @@ func (suite *AppTestSuite) TestGetAllURLs_Success() {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
+	// Assert the status code is 200 for successful retrieval of all URLs
 	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for successful retrieval of all URLs")
 	responseBody := w.Body.String()
 	suite.T().Logf("Response Body: %s", responseBody)
-	fmt.Println("response", responseBody);
+	fmt.Println("response", responseBody)
 }
 
-// TestGetURLDetails_Success tests the retrieval of details for a specific short URL and expects a successful response.
-func (suite *AppTestSuite) TestGetURLDetails_Success() {
+// TestGetURLDetailsSuccess tests the successful retrieval of details for a specific short URL.
+func (suite *AppTestSuite) TestGetURLDetailsSuccess() {
 	router := gin.Default()
 	router.GET("/v1/urls/:shortURL", func(ctx *gin.Context) {
 		controller.GetURLDetails(ctx, suite.db)
@@ -135,5 +143,6 @@ func (suite *AppTestSuite) TestGetURLDetails_Success() {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
+	// Assert the status code is 200 for successful retrieval of URL details
 	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for successful retrieval of URL details")
 }
