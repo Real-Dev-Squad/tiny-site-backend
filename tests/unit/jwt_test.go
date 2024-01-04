@@ -9,7 +9,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	utils.LoadEnv("../../.env")
+	utils.LoadEnv("../../environments/dev.env")
 
 	code := m.Run()
 
