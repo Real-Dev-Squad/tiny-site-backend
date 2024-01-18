@@ -104,7 +104,7 @@ func AuthRoutes(reg *gin.RouterGroup, db *bun.DB) {
 		}
 
 		// set cookie and redirect
-		ctx.SetCookie("token", token, 3600, "/", domain, true, true)
+		ctx.SetCookie("token", token, 31536000, "/", domain, true, true)
 		ctx.Redirect(302, authRedirectUrl)
 	})
 
