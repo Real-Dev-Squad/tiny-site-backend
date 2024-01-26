@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Real-Dev-Squad/tiny-site-backend/dtos"
@@ -53,35 +54,40 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 }
 
 func RedirectShortURL(ctx *gin.Context, db *bun.DB) {
-	shortURL := ctx.Param("shortURL")
+    shortURL := ctx.Param("shortURL")
 
-	var tinyURL models.Tinyurl
-	err := db.NewSelect().
-		Model(&tinyURL).
-		Where("short_url = ?", shortURL).
-		Scan(ctx, &tinyURL)
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, dtos.URLDetailsResponse{
-			Message: "Short URL not found",
-		})
-		return
-	}
-	tinyURL.AccessCount++
-	tinyURL.LastAccessedAt = time.Now().UTC()
+    var tinyURL models.Tinyurl
+    err := db.NewSelect().
+        Model(&tinyURL).
+        Where("short_url = ?", shortURL).
+        Scan(ctx, &tinyURL)
+    if err != nil {
+        ctx.JSON(http.StatusNotFound, dtos.URLDetailsResponse{
+            Message: "Short URL not found",
+        })
+        return
+    }
 
-	_, err = db.NewUpdate().
-		Model(&tinyURL).
-		Column("access_count", "last_accessed_at").
-		WherePK().
-		Exec(ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Failed to update access count and timestamp",
-		})
-		return
-	}
+    if !strings.HasPrefix(tinyURL.OriginalUrl, "http://") && !strings.HasPrefix(tinyURL.OriginalUrl, "https://") {
+        tinyURL.OriginalUrl = "http://" + tinyURL.OriginalUrl
+    }
 
-	ctx.Redirect(http.StatusMovedPermanently, tinyURL.OriginalUrl)
+    tinyURL.AccessCount++
+    tinyURL.LastAccessedAt = time.Now().UTC()
+
+    _, err = db.NewUpdate().
+        Model(&tinyURL).
+        Column("access_count", "last_accessed_at").
+        WherePK().
+        Exec(ctx)
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, gin.H{
+            "message": "Failed to update access count and timestamp",
+        })
+        return
+    }
+
+    ctx.Redirect(http.StatusMovedPermanently, tinyURL.OriginalUrl)
 }
 
 func GetAllURLs(ctx *gin.Context, db *bun.DB) {
