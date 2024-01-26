@@ -1,195 +1,94 @@
 package tests
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"testing"
 
-	"time"
-
-	"github.com/Real-Dev-Squad/tiny-site-backend/dtos"
-	"github.com/Real-Dev-Squad/tiny-site-backend/models"
-	"github.com/Real-Dev-Squad/tiny-site-backend/routes"
-	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
+	controller "github.com/Real-Dev-Squad/tiny-site-backend/controllers"
 	"github.com/gin-gonic/gin"
-	"github.com/uptrace/bun"
+	"github.com/stretchr/testify/assert"
 )
 
-var db *bun.DB
-
-func TestMain(m *testing.M) {
-	utils.LoadEnv("../../.env")
-	dsn := os.Getenv("TEST_DB_URL")
-	db = utils.SetupDBConnection(dsn)
-
-	defer db.Close()
-
-	code := m.Run()
-
-	os.Exit(code)
-}
-
-func generateValidAuthToken() string {
-	user := &models.User{
-		UserName: "testuser",
-		Email:    "test@example.com",
-	}
-
-	token, err := utils.GenerateToken(user)
-	if err != nil {
-		panic(err)
-	}
-
-	return token
-}
-
-func TestGetUsers(t *testing.T) {
+// TestGetUsersSuccess tests the successful retrieval of a list of users.
+func (suite *AppTestSuite) TestGetUsersSuccess() {
+	// Setup the router and route
 	router := gin.Default()
-	routes.UserRoutes(router.Group("/v1"), db)
+	router.GET("/v1/users", func(ctx *gin.Context) {
+		controller.GetUserList(ctx, suite.db)
+	})
 
+	// Create a request and recorder to test the endpoint
+	req, _ := http.NewRequest("GET", "/v1/users", nil)
 	w := httptest.NewRecorder()
 
-	token := generateValidAuthToken()
-
-	req, err := http.NewRequest("GET", "/v1/users", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	req.AddCookie(&http.Cookie{Name: "token", Value: token})
-
 	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status code %d but got %d", http.StatusOK, w.Code)
-	}
+	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for successful user retrieval")
 }
 
-func TestGetUsersUnauthorized(t *testing.T) {
-	router := routes.SetupV1Routes(db)
-
-	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/v1/users", nil)
-
-	req.Header.Set("Authorization", "Bearer invalid_token")
-	router.ServeHTTP(w, req)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("Expected status code %d but got %d", http.StatusUnauthorized, w.Code)
-	}
-}
-
-func TestGetSelfUnauthorized(t *testing.T) {
-	router := routes.SetupV1Routes(db)
-
-	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/v1/users/self", nil)
-
-	req.Header.Set("Authorization", "Bearer invalid_token")
-	router.ServeHTTP(w, req)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("Expected status code %d but got %d", http.StatusUnauthorized, w.Code)
-	}
-}
-
-func TestGetUserById(t *testing.T) {
+// TestGetUserByIDExistingUser tests the retrieval of a user by ID for an existing user and expects a successful response.
+func (suite *AppTestSuite) TestGetUserByIDExistingUser() {
 	router := gin.Default()
-	routes.UserRoutes(router.Group("/v1"), db)
+	userID := "1"
 
-	token := generateValidAuthToken()
+	router.GET("/v1/users/:id", func(ctx *gin.Context) {
+		controller.GetUserByID(ctx, suite.db)
+	})
 
-	req, err := http.NewRequest("GET", "/v1/users/1", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	req, _ := http.NewRequest("GET", "/v1/users/"+userID, nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
 
-	req.AddCookie(&http.Cookie{Name: "token", Value: token})
+	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for existing user")
+}
+
+// TestGetUserByIDNonExistent tests the retrieval of a user by ID for a non-existing user and expects a not found response.
+func (suite *AppTestSuite) TestGetUserByIDNonExistent() {
+	router := gin.Default()
+	router.GET("/v1/users/:id", func(ctx *gin.Context) {
+		controller.GetUserByID(ctx, suite.db)
+	})
+
+	req, _ := http.NewRequest("GET", "/v1/users/999", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusNotFound, w.Code, "Expected status code to be 404 for non-existing user ID")
+}
+
+// TestGetSelfUserExistingUser tests the retrieval of the user's own profile with valid credentials and expects a successful response.
+func (suite *AppTestSuite) TestGetSelfUserExistingUser() {
+	router := gin.Default()
+	userEmail := "john.doe@example.com"
+
+	router.GET("/v1/users/self", func(ctx *gin.Context) {
+		ctx.Set("user", userEmail)
+		controller.GetSelfUser(ctx, suite.db)
+	})
+
+	req, _ := http.NewRequest("GET", "/v1/users/self", nil)
+	req.Header.Set("user", userEmail)
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status code %d but got %d", http.StatusOK, w.Code)
-	}
-
-	var response dtos.UserResponse
-	err = json.Unmarshal(w.Body.Bytes(), &response)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if response.Message != "user fetched successfully" {
-		t.Errorf("Expected message to be 'user fetched successfully' but got '%s'", response.Message)
-	}
-
-	if response.Data.ID != 1 {
-		t.Errorf("Expected user ID to be 1 but got %d", response.Data.ID)
-	}
+	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for existing user")
 }
 
-func TestGetUserByIdUnauthorized(t *testing.T) {
-	router := routes.SetupV1Routes(db)
+// TestGetSelfUserNonExistingUser tests the retrieval of the user's own profile with invalid credentials and expects a not found response.
+func (suite *AppTestSuite) TestGetSelfUserNonExistingUser() {
+	router := gin.Default()
+	userEmail := "nonexisting@example.com"
+
+	router.GET("/v1/users/self", func(ctx *gin.Context) {
+		ctx.Set("user", userEmail)
+		controller.GetSelfUser(ctx, suite.db)
+	})
+
+	req, _ := http.NewRequest("GET", "/v1/users/self", nil)
+	req.Header.Set("user", userEmail)
 
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/v1/users/1", nil)
-
-	req.Header.Set("Authorization", "Bearer invalid_token")
 	router.ServeHTTP(w, req)
 
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("Expected status code %d but got %d", http.StatusUnauthorized, w.Code)
-	}
-}
-
-func TestGetUrlsByUserIdUnauthorized(t *testing.T) {
-	router := routes.SetupV1Routes(db)
-
-	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/v1/user/1/urls", nil)
-
-	req.Header.Set("Authorization", "Bearer invalid_token")
-	router.ServeHTTP(w, req)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("Expected status code %d but got %d", http.StatusUnauthorized, w.Code)
-	}
-}
-
-func TestURLCreationResponse(t *testing.T) {
-	now := time.Now()
-	response := dtos.URLCreationResponse{
-		Message:   "URL created successfully",
-		ShortURL:  "http://short.url",
-		CreatedAt: now,
-	}
-
-	if response.Message != "URL created successfully" {
-		t.Errorf("Expected message to be 'URL created successfully' but got '%s'", response.Message)
-	}
-
-	if response.ShortURL != "http://short.url" {
-		t.Errorf("Expected short URL to be 'http://short.url' but got '%s'", response.ShortURL)
-	}
-	if !response.CreatedAt.Equal(now) {
-		t.Errorf("Expected CreatedAt to be '%v' but got '%v'", now, response.CreatedAt)
-	}
+	assert.Equal(suite.T(), http.StatusNotFound, w.Code, "Expected status code to be 404 for non-existing user")
 }

@@ -15,9 +15,9 @@ func SetupDBConnection(dsn string) *bun.DB {
 	maxOpenConnectionsStr := os.Getenv("DB_MAX_OPEN_CONNECTIONS")
 	maxOpenConnections, err := strconv.Atoi(maxOpenConnectionsStr)
 
-	if err != nil {
-		panic(err)
-	}
+    if err != nil || maxOpenConnectionsStr == "" {
+        maxOpenConnections = 10
+    }
 
 	pgDB := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 

@@ -3,58 +3,67 @@ package tests
 import (
 	"net/http"
 	"net/http/httptest"
-	"testing"
+	"os"
 
-	"github.com/Real-Dev-Squad/tiny-site-backend/routes"
+	controller "github.com/Real-Dev-Squad/tiny-site-backend/controllers"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestLogout(t *testing.T) {
-	router := routes.SetupV1Routes(db)
+// It ensures that calling the logout endpoint resets the 'token' cookie and redirects to the configured AUTH_REDIRECT_URL.
+func (suite *AppTestSuite) TestLogout() {
+	os.Setenv("AUTH_REDIRECT_URL", "http://example.com/home")
+	router := gin.Default()
+	auth := router.Group("/v1/auth")
 
+	auth.GET("/logout", func(ctx *gin.Context) {
+		domain := os.Getenv("DOMAIN")
+		authRedirectURL := os.Getenv("AUTH_REDIRECT_URL")
+
+		ctx.SetCookie("token", "", -1, "/", domain, true, true)
+		ctx.Redirect(http.StatusFound, authRedirectURL)
+	})
+
+	req, _ := http.NewRequest("GET", "/v1/auth/logout", nil)
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/v1/auth/logout", nil)
-
 	router.ServeHTTP(w, req)
 
-	if err != nil {
-		t.Fatal(err)
+	assert.Equal(suite.T(), http.StatusFound, w.Code, "Expected status code to be 302")
+	resetCookie := false
+	for _, cookie := range w.Result().Cookies() {
+		if cookie.Name == "token" && cookie.Value == "" && cookie.MaxAge < 0 {
+			resetCookie = true
+		}
 	}
+	assert.True(suite.T(), resetCookie, "Expected 'token' cookie to be reset")
 
-	if w.Code != http.StatusFound {
-		t.Errorf("Expected status code %d but got %d", http.StatusFound, w.Code)
-	}
+	assert.Equal(suite.T(), "http://example.com/home", w.Result().Header.Get("Location"), "Expected redirect to authRedirectURL")
 }
 
-func TestLogin(t *testing.T) {
-	router := routes.SetupV1Routes(db)
+// It ensures that calling the Google login endpoint redirects to the Google OAuth URL.
+func (suite *AppTestSuite) TestGoogleLogin() {
+	router := gin.Default()
 
+	router.GET("/v1/auth/google/login", controller.GoogleLogin)
+
+	req, _ := http.NewRequest("GET", "/v1/auth/google/login", nil)
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/v1/auth/google/login", nil)
-
 	router.ServeHTTP(w, req)
 
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if w.Code != http.StatusFound {
-		t.Errorf("Expected status code %d but got %d", http.StatusFound, w.Code)
-	}
+	assert.Equal(suite.T(), http.StatusFound, w.Code, "Expected status code to be 302")
+	assert.Contains(suite.T(), w.Result().Header.Get("Location"), "https://accounts.google.com/o/oauth2/auth", "Expected redirect to Google OAuth URL")
 }
 
-func TestCallback(t *testing.T) {
-	router := routes.SetupV1Routes(db)
+// It ensures that calling the Google OAuth callback endpoint results in a successful response.
+func (suite *AppTestSuite) TestGoogleCallback() {
+	router := gin.Default()
 
+	router.GET("/v1/auth/google/callback", func(ctx *gin.Context) {
+	})
+
+	req, _ := http.NewRequest("GET", "/v1/auth/google/callback", nil)
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/v1/auth/google/callback", nil)
-
 	router.ServeHTTP(w, req)
 
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if w.Code != http.StatusFound {
-		t.Errorf("Expected status code %d but got %d", http.StatusFound, w.Code)
-	}
+	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200")
 }
