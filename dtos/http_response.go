@@ -28,6 +28,10 @@ type URLDetails struct {
 	LastAccessedAt time.Time `json:"lastAccessedAt"`
 }
 
+type DeleteURLResponse struct {
+	Message string `json:"message"`
+}
+
 type URLNotFoundResponse struct {
 	Message string `json:"message"`
 }

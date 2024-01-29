@@ -18,6 +18,10 @@ func TinyURLRoutes(rg *gin.RouterGroup, db *bun.DB) {
 		controller.CreateTinyURL(ctx, db)
 	})
 
+	tinyURL.DELETE("/:shortURL", func(ctx *gin.Context) {
+		controller.DeleteURL(ctx, db)
+	})
+
 	urls.Group("/self", middleware.AuthMiddleware()).GET("", func(ctx *gin.Context) {
 		controller.GetAllURLs(ctx, db)
 	})
