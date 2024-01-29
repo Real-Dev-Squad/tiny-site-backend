@@ -91,8 +91,22 @@ func RedirectShortURL(ctx *gin.Context, db *bun.DB) {
 }
 
 func GetAllURLs(ctx *gin.Context, db *bun.DB) {
-	userID := ctx.Param("id")
+	userEmail, _ := ctx.Get("user")
+	var user models.User
 	var tinyURLs []models.Tinyurl
+
+	userModelError := db.NewSelect().
+		Model(&user).
+		Where("email = ?", userEmail).
+		Scan(ctx, &user)
+
+	if userModelError != nil {
+		ctx.JSON(http.StatusNotFound, dtos.UserURLsResponse{
+			Message: "User not found",
+		})
+		return
+	}
+	userID := user.ID
 
 	err := db.NewSelect().
 		Model(&tinyURLs).
