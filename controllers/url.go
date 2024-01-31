@@ -168,3 +168,37 @@ func GetURLDetails(ctx *gin.Context, db *bun.DB) {
 		URL:     urlDetails,
 	})
 }
+
+
+func DeleteURL(ctx *gin.Context, db *bun.DB) {
+	shortURL := ctx.Param("shortURL")
+	var tinyURL models.Tinyurl
+
+	err := db.NewSelect().
+		Model(&tinyURL).
+		Where("short_url = ?", shortURL).
+		Scan(ctx, &tinyURL)
+
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, dtos.URLNotFoundResponse{
+			Message: "URL not found",
+		})
+		return
+	}
+
+	_, deleteErr := db.NewDelete().
+		Model(&tinyURL).
+		WherePK().
+		Exec(ctx)
+
+	if deleteErr != nil {
+		ctx.JSON(http.StatusInternalServerError, dtos.DeleteURLResponse{
+			Message: "Failed to delete URL",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dtos.DeleteURLResponse{
+		Message: "URL deleted successfully",
+	})
+}
