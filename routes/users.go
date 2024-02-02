@@ -25,8 +25,4 @@ func UserRoutes(rg *gin.RouterGroup, db *bun.DB) {
     users.GET("/self", func(ctx *gin.Context) {
         controller.GetSelfUser(ctx, db)
     })
-
-    user.GET("/:id/urls", func(ctx *gin.Context) {
-		controller.GetAllURLs(ctx, db)
-	})
 }

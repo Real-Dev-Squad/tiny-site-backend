@@ -3,7 +3,6 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 
@@ -82,11 +81,11 @@ func (suite *AppTestSuite) TestCreateTinyURLEmptyOriginalURL() {
 // TestRedirectShortURLSuccess tests the successful redirection of a short URL to the original URL.
 func (suite *AppTestSuite) TestRedirectShortURLSuccess() {
 	router := gin.Default()
-	router.GET("/v1/tinyurl/:shortURL", func(ctx *gin.Context) {
+	router.GET("/v1/redirect/:shortURL", func(ctx *gin.Context) {
 		controller.RedirectShortURL(ctx, suite.db)
 	})
 
-	req, _ := http.NewRequest("GET", "/v1/tinyurl/37fff02c", nil)
+	req, _ := http.NewRequest("GET", "/v1/redirect/37fff02c", nil)
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -114,20 +113,19 @@ func (suite *AppTestSuite) TestRedirectShortURLNotFound() {
 // TestGetAllURLsSuccess tests the successful retrieval of all URLs for a user.
 func (suite *AppTestSuite) TestGetAllURLsSuccess() {
 	router := gin.Default()
-	router.GET("/v1/user/:id/urls", func(ctx *gin.Context) {
+	userEmail := "john.doe@example.com"
+
+	router.GET("/v1/urls/self", func(ctx *gin.Context) {
+		ctx.Set("user", userEmail)
 		controller.GetAllURLs(ctx, suite.db)
 	})
 
-	req, _ := http.NewRequest("GET", "/v1/user/1/urls", nil)
+	req, _ := http.NewRequest("GET", "/v1/urls/self", nil)
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	// Assert the status code is 200 for successful retrieval of all URLs
 	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for successful retrieval of all URLs")
-	responseBody := w.Body.String()
-	suite.T().Logf("Response Body: %s", responseBody)
-	fmt.Println("response", responseBody)
 }
 
 // TestGetURLDetailsSuccess tests the successful retrieval of details for a specific short URL.
