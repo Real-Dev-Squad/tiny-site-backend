@@ -10,5 +10,5 @@ func GenerateMD5Hash(url string) string {
 	url = url + time.Nanosecond.String()
 	hash := md5.New()
 	hash.Write([]byte(url))
-	return hex.EncodeToString(hash.Sum(nil))[:8]
+	return hex.EncodeToString(hash.Sum(nil))[:6]
 }
