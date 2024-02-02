@@ -79,6 +79,49 @@ func (suite *AppTestSuite) TestCreateTinyURLEmptyOriginalURL() {
 	assert.Equal(suite.T(), http.StatusBadRequest, w.Code, "Expected status code to be 400 for empty original URL")
 }
 
+// TestCreateTinyURLCustomShortURL tests the creation of a tiny URL with a custom short URL and expects a successful response.
+func (suite *AppTestSuite) TestCreateTinyURLCustomShortURL() {
+	router := gin.Default()
+	router.POST("/v1/tinyurl", func(ctx *gin.Context) {
+		controller.CreateTinyURL(ctx, suite.db)
+	})
+
+	requestBody := map[string]interface{}{
+		"OriginalUrl": "https://example.com",
+		"ShortUrl":    "short",
+		"UserId":      1,
+	}
+	requestJSON, _ := json.Marshal(requestBody)
+	req, _ := http.NewRequest("POST", "/v1/tinyurl", bytes.NewBuffer(requestJSON))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for successful tiny URL creation")
+}
+
+func (suite *AppTestSuite) TestCreateTinyURLCustomShortURLExists() {
+	router := gin.Default()
+	router.POST("/v1/tinyurl", func(ctx *gin.Context) {
+		controller.CreateTinyURL(ctx, suite.db)
+	})
+
+	requestBody := map[string]interface{}{
+		"OriginalUrl": "https://rds.com",
+		"ShortUrl":    "short",
+		"UserId":      1,
+	}
+	requestJSON, _ := json.Marshal(requestBody)
+	req, _ := http.NewRequest("POST", "/v1/tinyurl", bytes.NewBuffer(requestJSON))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusBadRequest, w.Code, "Expected status code to be 400 for existing short URL")
+}
+
 // TestRedirectShortURLSuccess tests the successful redirection of a short URL to the original URL.
 func (suite *AppTestSuite) TestRedirectShortURLSuccess() {
 	router := gin.Default()
