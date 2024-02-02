@@ -14,11 +14,11 @@ func TestGenerateMD5Hash(t *testing.T) {
 	}{
 		{
 			inputURL:     "https://example.com",
-			expectedHash: "a4433a82",
+			expectedHash: "a4433",
 		},
 		{
 			inputURL:     "https://google.com",
-			expectedHash: "afff4190",
+			expectedHash: "afff4",
 		},
 	}
 

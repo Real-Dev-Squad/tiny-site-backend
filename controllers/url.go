@@ -28,10 +28,9 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
         })
         return
     }
-    shortURLProvided := false
 
-    if customShortURL := body.ShortUrl; customShortURL != "" {
-        if len(customShortURL) < 5 {
+    if body.ShortUrl != "" {
+        if len(body.ShortUrl) < 5 {
             ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
                 Message: "Custom short URL must be at least 5 characters long",
             })
@@ -39,30 +38,30 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
         }
 
         var existingURL models.Tinyurl
-        if err := db.NewSelect().Model(&existingURL).Where("short_url = ?", customShortURL).Limit(1).Scan(ctx); err == nil {
+        if err := db.NewSelect().Model(&existingURL).Where("short_url = ?", body.ShortUrl).Limit(1).Scan(ctx); err == nil {
             ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
                 Message: "Custom short URL already exists",
             })
             return
         }
-        shortURLProvided = true
+    } else {
+        generatedShortURL := utils.GenerateMD5Hash(body.OriginalUrl)
+        var existingURL models.Tinyurl
+        if err := db.NewSelect().Model(&existingURL).Where("short_url = ?", generatedShortURL).Limit(1).Scan(ctx); err != nil {
+            body.ShortUrl = generatedShortURL
+        }
     }
 
-    var existingURL models.Tinyurl
-    if err := db.NewSelect().Model(&existingURL).Where("original_url = ?", body.OriginalUrl).Limit(1).Scan(ctx); err == nil {
+    var existingOriginalURL models.Tinyurl
+    if err := db.NewSelect().Model(&existingOriginalURL).Where("original_url = ?", body.OriginalUrl).Limit(1).Scan(ctx); err == nil {
         ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
             Message:  "Tiny URL already exists for the original URL",
-            ShortURL: existingURL.ShortUrl,
+            ShortURL: existingOriginalURL.ShortUrl,
         })
         return
     }
 
-    if !shortURLProvided {
-        body.ShortUrl = utils.GenerateMD5Hash(body.OriginalUrl)
-    }
-
     body.CreatedAt = time.Now().UTC()
-
     if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
         ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
             Message: "Failed to insert into database: " + err.Error(),
