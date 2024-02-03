@@ -33,6 +33,6 @@ CREATE TABLE IF NOT EXISTS tiny_url (
 
 -- Insert data into the tiny_url table
 INSERT INTO tiny_url (original_url, short_url, comment, user_id, expired_at, created_by, access_count, last_accessed_at)
-VALUES ('https://www.example.com/1', '37fff02c', 'Some comment', 1, '2023-01-01T00:00:00Z', 'JohnDoe', 0, '2023-01-01T00:00:00Z');
+VALUES ('https://www.example.com/1', '37fff', 'Some comment', 1, '2023-01-01T00:00:00Z', 'JohnDoe', 0, '2023-01-01T00:00:00Z');
 
 COMMIT;
