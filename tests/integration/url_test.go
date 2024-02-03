@@ -153,7 +153,7 @@ func (suite *AppTestSuite) TestRedirectShortURLSuccess() {
 		controller.RedirectShortURL(ctx, suite.db)
 	})
 
-	req, _ := http.NewRequest("GET", "/v1/redirect/37fff02c", nil)
+	req, _ := http.NewRequest("GET", "/v1/redirect/37fff", nil)
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
