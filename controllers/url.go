@@ -13,44 +13,66 @@ import (
 )
 
 func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
-	var body models.Tinyurl
+    var body models.Tinyurl
 
-	if err := ctx.BindJSON(&body); err != nil {
-		ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
-			Message: "Invalid JSON format: " + err.Error(),
-		})
-		return
-	}
+    if err := ctx.BindJSON(&body); err != nil {
+        ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
+            Message: "Invalid JSON format: " + err.Error(),
+        })
+        return
+    }
 
-	if body.OriginalUrl == "" {
-		ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
-			Message: "original url is required",
-		})
-		return
-	}
+    if body.OriginalUrl == "" {
+        ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
+            Message: "Original URL is required",
+        })
+        return
+    }
 
-	if err := db.NewSelect().Model(&body).Where("original_url = ?", body.OriginalUrl).Scan(ctx, &body); err == nil {
-		ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
-			Message:  "Tiny URL already exists",
-			ShortURL: body.ShortUrl,
-		})
-		return
-	}
+    var existingOriginalURL models.Tinyurl
+    if err := db.NewSelect().Model(&existingOriginalURL).Where("original_url = ?", body.OriginalUrl).Limit(1).Scan(ctx); err == nil {
+        ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
+            Message:  "Tiny URL already exists for the original URL",
+            ShortURL: existingOriginalURL.ShortUrl,
+        })
+        return
+    }
 
-	body.ShortUrl = utils.GenerateMD5Hash(body.OriginalUrl)
-	body.CreatedAt = time.Now().UTC()
+    if body.ShortUrl != "" {
+        if len(body.ShortUrl) < 5 {
+            ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
+                Message: "Custom short URL must be at least 5 characters long",
+            })
+            return
+        }
+    
+        var existingURL models.Tinyurl
+        if err := db.NewSelect().Model(&existingURL).Where("short_url = ?", body.ShortUrl).Limit(1).Scan(ctx); err == nil {
+            ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
+                Message: "Custom short URL already exists",
+            })
+            return
+        }
+    } else {
+        generatedShortURL := utils.GenerateMD5Hash(body.OriginalUrl)
+        var existingURL models.Tinyurl
+        if err := db.NewSelect().Model(&existingURL).Where("short_url = ?", generatedShortURL).Limit(1).Scan(ctx); err != nil {
+            body.ShortUrl = generatedShortURL
+        }
+    }
 
-	if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
-		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
-			Message: "Failed to insert into database: " + err.Error(),
-		})
-		return
-	}
+    body.CreatedAt = time.Now().UTC()
+    if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
+        ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+            Message: "Failed to insert into the database: " + err.Error(),
+        })
+        return
+    }
 
-	ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
-		Message:  "Tiny URL created successfully",
-		ShortURL: body.ShortUrl,
-	})
+    ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
+        Message:  "Tiny URL created successfully",
+        ShortURL: body.ShortUrl,
+    })
 }
 
 func RedirectShortURL(ctx *gin.Context, db *bun.DB) {
