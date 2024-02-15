@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Real-Dev-Squad/tiny-site-backend/cmd/bun/migrations"
 	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
-	"github.com/uptrace/bun/example/migrate/migrations"
 	"github.com/uptrace/bun/migrate"
 	"github.com/urfave/cli/v2"
 )
