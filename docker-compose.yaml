@@ -1,51 +1,30 @@
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Docker compose reference guide at
-# https://docs.docker.com/compose/compose-file/
+version: '3.9'
 
-# Here the instructions define your application as a service called "server".
-# This service is built from the Dockerfile in the current directory.
-# You can add other services your application may depend on here, such as a
-# database or a cache. For examples, see the Awesome Compose repository:
-# https://github.com/docker/awesome-compose
 services:
-  server:
-    build:
-      context: .
-      target: final
-    ports:
-      - 4001:4001
-
-# The commented out section below is an example of how to define a PostgreSQL
-# database that your application can use. `depends_on` tells Docker Compose to
-# start the database before your application. The `db-data` volume persists the
-# database data between container restarts. The `db-password` secret is used
-# to set the database password. You must create `db/password.txt` and add
-# a password of your choosing to it before running `docker compose up`.
-    depends_on:
-      db:
-        condition: service_healthy
-  db:
-    image: postgres
-    user: postgres
-    # secrets:
-    #   - db-password
-    # volumes:
-    #   - db-data:/var/lib/postgresql/data
+  tiny_site_backend:
+    container_name: tiny_site_backend
+    image: realdevsquad/tiny_site_backend:1.0.0
+    build: .
     environment:
-      - POSTGRES_USER=tinysite
-      - POSTGRES_DB=tinysite
-      - POSTGRES_PASSWORD=tinysite
-      # - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
-    expose:
-      - 5432
-    healthcheck:
-      test: [ "CMD", "pg_isready" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-# volumes:
-#   db-data:
-# secrets:
-#   db-password:
-#     file: db/password.txt
+      # Update all the envs here
+      DB_URL: 'postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+      DB_MAX_OPEN_CONNECTIONS: '5'
+      ALLOWED_ORIGINS: 'http://localhost:3000'
+    ports:
+      - '8000:8000'
+    depends_on:
+      - tiny_site_backend_db
+  tiny_site_backend_db:
+    container_name: tiny_site_backend_db
+    image: postgres:12
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
+volumes:
+  pgdata: {}
