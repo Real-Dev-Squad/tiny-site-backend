@@ -73,7 +73,6 @@ func GetUserByID(ctx *gin.Context, db *bun.DB) {
 func GetSelfUser(ctx *gin.Context, db *bun.DB) {
 	userEmail, exists := ctx.Get("user")
 	if !exists {
-		// If userEmail doesn't exist in context, it means authentication middleware might have failed or was not run.
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Authentication required"})
 		return
 	}
