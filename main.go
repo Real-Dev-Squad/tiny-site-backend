@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"os"
 
 	"github.com/Real-Dev-Squad/tiny-site-backend/routes"
@@ -11,7 +12,11 @@ import (
 func main() {
 	utils.LoadEnv(".env")
 	dsn := os.Getenv("DB_URL")
-	db := utils.SetupDBConnection(dsn)
+	db, err := utils.SetupDBConnection(dsn)
+	if err != nil {
+		log.Fatalf("failed to connect to the database: %v", err)
+		os.Exit(1)
+	}
 
 	port := flag.String("port", os.Getenv("PORT"), "server address to listen on")
 	flag.Parse()

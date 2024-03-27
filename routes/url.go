@@ -2,7 +2,7 @@ package routes
 
 import (
 	controller "github.com/Real-Dev-Squad/tiny-site-backend/controllers"
-	"github.com/Real-Dev-Squad/tiny-site-backend/middlewares"
+	middleware "github.com/Real-Dev-Squad/tiny-site-backend/middlewares"
 	"github.com/gin-gonic/gin"
 	"github.com/uptrace/bun"
 )

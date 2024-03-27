@@ -12,7 +12,8 @@ import (
 	"github.com/uptrace/bun/extra/bundebug"
 )
 
-func SetupDBConnection(dsn string) *bun.DB {
+func SetupDBConnection(dsn string) (*bun.DB, error) {
+	
 	maxOpenConnectionsStr := os.Getenv("DB_MAX_OPEN_CONNECTIONS")
 	maxOpenConnections, err := strconv.Atoi(maxOpenConnectionsStr)
 
@@ -27,10 +28,8 @@ func SetupDBConnection(dsn string) *bun.DB {
 	db := bun.NewDB(pgDB, pgdialect.New())
 
 	dbConnectionError := db.Ping()
-
 	if dbConnectionError != nil {
-		fmt.Print(dbConnectionError.Error())
-		panic("Error while connecting database")
+		return nil, fmt.Errorf("failed to connect to the database: %v", dbConnectionError)
 	}
 
 	db.AddQueryHook(bundebug.NewQueryHook(
@@ -38,5 +37,5 @@ func SetupDBConnection(dsn string) *bun.DB {
 		bundebug.FromEnv("BUNDEBUG"),
 	))
 
-	return db
+	return db, nil
 }
