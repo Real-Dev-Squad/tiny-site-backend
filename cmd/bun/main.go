@@ -26,7 +26,11 @@ func main() {
 
 	dsn := os.Getenv("DB_URL")
 
-	db := utils.SetupDBConnection(dsn)
+	db, err := utils.SetupDBConnection(dsn)
+	if err != nil {
+		log.Fatalf("failed to connect to the database: %v", err)
+		os.Exit(1)
+	}
 
 	app := &cli.App{
 		Name: "bun",

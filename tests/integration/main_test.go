@@ -27,7 +27,10 @@ func (suite *AppTestSuite) SetupSuite() {
 		log.Fatalf("Failed to create PostgreSQL container: %s", err)
 	}
 
-	suite.db = utils.SetupDBConnection(suite.pgContainer.ConnectionString)
+	suite.db, err = utils.SetupDBConnection(suite.pgContainer.ConnectionString)
+	if err != nil {
+		log.Fatalf("failed to connect to the database: %v", err)
+	}
 }
 
 // TearDownSuite runs once after all the tests in the suite have finished.
