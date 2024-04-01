@@ -66,13 +66,6 @@ func GoogleCallback(ctx *gin.Context, db *bun.DB) {
         return
     }
 
-    if db == nil {
-        ctx.JSON(500, gin.H{
-            "message": "database is not available",
-        })
-        return
-    }
-
     count, err := db.NewSelect().Model(user).Where("email = ?", googleAccountInfo.Email).ScanAndCount(ctx)
 
     if err != nil {
