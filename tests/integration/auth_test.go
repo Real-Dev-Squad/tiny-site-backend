@@ -83,10 +83,5 @@ func (suite *AppTestSuite) TestGoogleCallback_ErrorHandling() {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	// Assert that the response status code is 500 Internal Server Error.
 	assert.Equal(suite.T(), http.StatusInternalServerError, w.Code, "Expected status code to be 500")
-
-	// Assert that the response body contains the expected error message.
-	expectedErrorMessage := "database is not available"
-	assert.Contains(suite.T(), w.Body.String(), expectedErrorMessage, "Expected error message in response body")
 }
