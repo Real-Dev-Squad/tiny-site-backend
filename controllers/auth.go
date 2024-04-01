@@ -107,7 +107,6 @@ func GoogleCallback(ctx *gin.Context, db *bun.DB) {
     ctx.Redirect(302, authRedirectUrl)
 }
 
-
 func Logout(ctx *gin.Context) {
 	domain := os.Getenv("DOMAIN")
 	authRedirectUrl := os.Getenv("AUTH_REDIRECT_URL")
