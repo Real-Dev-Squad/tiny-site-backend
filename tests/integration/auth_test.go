@@ -8,6 +8,7 @@ import (
 	controller "github.com/Real-Dev-Squad/tiny-site-backend/controllers"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/uptrace/bun"
 )
 
 // It ensures that calling the logout endpoint resets the 'token' cookie and redirects to the configured AUTH_REDIRECT_URL.
@@ -66,4 +67,26 @@ func (suite *AppTestSuite) TestGoogleCallback() {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200")
+}
+
+func (suite *AppTestSuite) TestGoogleCallback_ErrorHandling() {
+	router := gin.Default()
+
+	// Mock the database connection to simulate a scenario where the database is unavailable.
+	var db *bun.DB = nil
+
+	router.GET("/v1/auth/google/callback", func(ctx *gin.Context) {
+		controller.GoogleCallback(ctx, db)
+	})
+
+	req, _ := http.NewRequest("GET", "/v1/auth/google/callback", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	// Assert that the response status code is 500 Internal Server Error.
+	assert.Equal(suite.T(), http.StatusInternalServerError, w.Code, "Expected status code to be 500")
+
+	// Assert that the response body contains the expected error message.
+	expectedErrorMessage := "database is not available"
+	assert.Contains(suite.T(), w.Body.String(), expectedErrorMessage, "Expected error message in response body")
 }
