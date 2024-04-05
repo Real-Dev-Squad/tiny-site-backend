@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/Real-Dev-Squad/tiny-site-backend/dtos"
@@ -69,27 +71,37 @@ func GetUserByID(ctx *gin.Context, db *bun.DB) {
 }
 
 func GetSelfUser(ctx *gin.Context, db *bun.DB) {
-	userEmail, _ := ctx.Get("user")
+	userEmail, exists := ctx.Get("user")
+	if !exists {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Authentication required"})
+		return
+	}
 
 	var user models.User
 	err := db.NewSelect().Model(&user).Where("email = ?", userEmail).Scan(ctx)
 
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, dtos.UserResponse{
-			Message: "User not found: " + err.Error(),
+		if errors.Is(err, sql.ErrNoRows) {
+			ctx.JSON(http.StatusNotFound, dtos.UserResponse{
+				Message: "User not found",
+			})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Internal server error: unable to fetch user",
+			})
+			return
+		}
+	} else {
+		dtoUser := dtos.User{
+			ID:        user.ID,
+			UserName:  user.UserName,
+			Email:     user.Email,
+			CreatedAt: user.CreatedAt,
+		}
+
+		ctx.JSON(http.StatusOK, dtos.UserResponse{
+			Message: "user fetched successfully",
+			Data:    dtoUser,
 		})
-		return
 	}
-
-	dtoUser := dtos.User{
-		ID:        user.ID,
-		UserName:  user.UserName,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt,
-	}
-
-	ctx.JSON(http.StatusOK, dtos.UserResponse{
-		Message: "user fetched successfully",
-		Data:    dtoUser,
-	})
 }

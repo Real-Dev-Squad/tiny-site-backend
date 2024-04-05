@@ -51,48 +51,60 @@ func GoogleLogin(ctx *gin.Context) {
 }
 
 func GoogleCallback(ctx *gin.Context, db *bun.DB) {
-	code := ctx.Query("code")
-	domain := os.Getenv("DOMAIN")
-	authRedirectUrl := os.Getenv("AUTH_REDIRECT_URL")
+    code := ctx.Query("code")
+    domain := os.Getenv("DOMAIN")
+    authRedirectUrl := os.Getenv("AUTH_REDIRECT_URL")
 
-	user := new(models.User)
-	googleAccountInfo, getInfoError := getUserInfoFromCode(code, getGoogleOAuthConfig(), ctx)
+    user := new(models.User)
+    googleAccountInfo, getInfoError := getUserInfoFromCode(code, getGoogleOAuthConfig(), ctx)
 
-	if getInfoError != nil {
-		log.Fatal(getInfoError)
-		ctx.JSON(500, gin.H{
-			"message": "error",
-		})
-	}
+    if getInfoError != nil {
+        log.Fatal(getInfoError)
+        ctx.JSON(500, gin.H{
+            "message": "error",
+        })
+        return
+    }
 
-	count, _ := db.NewSelect().Model(user).Where("email = ?", googleAccountInfo.Email).ScanAndCount(ctx)
+    count, err := db.NewSelect().Model(user).Where("email = ?", googleAccountInfo.Email).ScanAndCount(ctx)
 
-	if count == 0 {
-		newUser := &models.User{
-			UserName: googleAccountInfo.Name,
-			Email:    googleAccountInfo.Email,
-		}
+    if err != nil {
+        log.Fatal(err)
+        ctx.JSON(500, gin.H{
+            "message": "error",
+        })
+        return
+    }
 
-		_, err := db.NewInsert().Model(newUser).Exec(ctx)
+    if count == 0 {
+        newUser := &models.User{
+            UserName: googleAccountInfo.Name,
+            Email:    googleAccountInfo.Email,
+        }
 
-		if err != nil {
-			log.Fatal(err)
-			ctx.JSON(500, gin.H{
-				"message": "error",
-			})
-		}
-	}
+        _, err := db.NewInsert().Model(newUser).Exec(ctx)
 
-	token, err := utils.GenerateToken(user)
+        if err != nil {
+            log.Fatal(err)
+            ctx.JSON(500, gin.H{
+                "message": "error",
+            })
+            return
+        }
+    }
 
-	if err != nil {
-		log.Fatal(err)
-		ctx.JSON(500, gin.H{
-			"message": "error",
-		})
-	}
-	ctx.SetCookie("token", token, tokenExpiration, "/", domain, true, true)
-	ctx.Redirect(302, authRedirectUrl)
+    token, err := utils.GenerateToken(user)
+
+    if err != nil {
+        log.Fatal(err)
+        ctx.JSON(500, gin.H{
+            "message": "error",
+        })
+        return
+    }
+
+    ctx.SetCookie("token", token, tokenExpiration, "/", domain, true, true)
+    ctx.Redirect(302, authRedirectUrl)
 }
 
 func Logout(ctx *gin.Context) {

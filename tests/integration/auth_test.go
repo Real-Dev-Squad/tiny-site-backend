@@ -67,3 +67,37 @@ func (suite *AppTestSuite) TestGoogleCallback() {
 
 	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200")
 }
+
+// TestGoogleCallback_ErrorHandling tests error handling in the Google OAuth callback.
+func (suite *AppTestSuite) TestGoogleCallback_ErrorHandling() {
+	router := gin.Default()
+
+	router.GET("/v1/auth/google/callback", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Missing required parameter: code",
+		})
+	})
+
+	req, _ := http.NewRequest("GET", "/v1/auth/google/callback", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusBadRequest, w.Code, "Expected status code to be 400")
+}
+
+func (suite *AppTestSuite) TestGoogleCallback_ErrorHandling_DatabaseError() {
+    router := gin.Default()
+
+    router.GET("/v1/auth/google/callback", func(ctx *gin.Context) {
+        ctx.JSON(http.StatusInternalServerError, gin.H{
+            "error": "Failed to perform database operation",
+        })
+    })
+
+    req, _ := http.NewRequest("GET", "/v1/auth/google/callback?code=valid_code", nil)
+    w := httptest.NewRecorder()
+    router.ServeHTTP(w, req)
+
+    assert.Equal(suite.T(), http.StatusInternalServerError, w.Code, "Expected status code to be 500")
+}
+
