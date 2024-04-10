@@ -11,39 +11,40 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func GetUserList(ctx *gin.Context, db *bun.DB) {
-	var users []models.User
-	err := db.NewSelect().Model(&users).OrderExpr("id ASC").Limit(10).Scan(ctx)
+// deprecated as of now
+// func GetUserList(ctx *gin.Context, db *bun.DB) {
+// 	var users []models.User
+// 	err := db.NewSelect().Model(&users).OrderExpr("id ASC").Limit(10).Scan(ctx)
 
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dtos.UserListResponse{
-			Message: "Failed to fetch users: " + err.Error(),
-		})
-		return
-	}
+// 	if err != nil {
+// 		ctx.JSON(http.StatusInternalServerError, dtos.UserListResponse{
+// 			Message: "Failed to fetch users: " + err.Error(),
+// 		})
+// 		return
+// 	}
 
-	if len(users) == 0 {
-		ctx.JSON(http.StatusNotFound, dtos.UserListResponse{
-			Message: "No users found",
-		})
-		return
-	}
+// 	if len(users) == 0 {
+// 		ctx.JSON(http.StatusNotFound, dtos.UserListResponse{
+// 			Message: "No users found",
+// 		})
+// 		return
+// 	}
 
-	var dtoUsers []dtos.User
-	for _, user := range users {
-		dtoUsers = append(dtoUsers, dtos.User{
-			ID:        user.ID,
-			UserName:  user.UserName,
-			Email:     user.Email,
-			CreatedAt: user.CreatedAt,
-		})
-	}
+// 	var dtoUsers []dtos.User
+// 	for _, user := range users {
+// 		dtoUsers = append(dtoUsers, dtos.User{
+// 			ID:        user.ID,
+// 			UserName:  user.UserName,
+// 			Email:     user.Email,
+// 			CreatedAt: user.CreatedAt,
+// 		})
+// 	}
 
-	ctx.JSON(http.StatusOK, dtos.UserListResponse{
-		Message: "users fetched successfully",
-		Data:    dtoUsers,
-	})
-}
+// 	ctx.JSON(http.StatusOK, dtos.UserListResponse{
+// 		Message: "users fetched successfully",
+// 		Data:    dtoUsers,
+// 	})
+// }
 
 func GetUserByID(ctx *gin.Context, db *bun.DB) {
 	id := ctx.Param("id")
@@ -60,6 +61,7 @@ func GetUserByID(ctx *gin.Context, db *bun.DB) {
 
 	dtoUser := dtos.User{
 		ID:        user.ID,
+		UserName: user.UserName,
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt,
 	}

@@ -10,20 +10,20 @@ import (
 )
 
 // TestGetUsersSuccess tests the successful retrieval of a list of users.
-func (suite *AppTestSuite) TestGetUsersSuccess() {
-	// Setup the router and route
-	router := gin.Default()
-	router.GET("/v1/users", func(ctx *gin.Context) {
-		controller.GetUserList(ctx, suite.db)
-	})
+// func (suite *AppTestSuite) TestGetUsersSuccess() {
+// 	// Setup the router and route
+// 	router := gin.Default()
+// 	router.GET("/v1/users", func(ctx *gin.Context) {
+// 		controller.GetUserList(ctx, suite.db)
+// 	})
 
-	// Create a request and recorder to test the endpoint
-	req, _ := http.NewRequest("GET", "/v1/users", nil)
-	w := httptest.NewRecorder()
+// 	// Create a request and recorder to test the endpoint
+// 	req, _ := http.NewRequest("GET", "/v1/users", nil)
+// 	w := httptest.NewRecorder()
 
-	router.ServeHTTP(w, req)
-	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for successful user retrieval")
-}
+// 	router.ServeHTTP(w, req)
+// 	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for successful user retrieval")
+// }
 
 // TestGetUserByIDExistingUser tests the retrieval of a user by ID for an existing user and expects a successful response.
 func (suite *AppTestSuite) TestGetUserByIDExistingUser() {
