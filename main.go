@@ -18,6 +18,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	migrationsDir := "./migrations" 
+	if err := utils.ApplyMigrations(db, migrationsDir); err != nil {
+		log.Fatalf("failed to apply migrations: %v", err)
+		os.Exit(1)
+	}
+
+
 	port := flag.String("port", os.Getenv("PORT"), "server address to listen on")
 	flag.Parse()
 
