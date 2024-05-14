@@ -1,4 +1,4 @@
-package main
+package migration
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func main() {
+func RunMigrations() {
 
 	currentDir, err := os.Getwd()
 	if err != nil {
