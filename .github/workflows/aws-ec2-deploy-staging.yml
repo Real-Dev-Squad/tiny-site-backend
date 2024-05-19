@@ -29,7 +29,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.sha }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}-${{vars.ENV}}:${{ github.sha }}
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
@@ -38,12 +38,13 @@ jobs:
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.sha }}
-            docker stop ${{ github.event.repository.name }} || true
-            docker rm ${{ github.event.repository.name }} || true
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}-${{vars.ENV}}:${{ github.sha }}
+            docker stop ${{ github.event.repository.name }}-${{vars.ENV}} || true
+            docker rm ${{ github.event.repository.name }}-${{vars.ENV}} || true
             docker run \
               -d -p ${{vars.PORT}}:${{vars.PORT}} \
-              --name ${{ github.event.repository.name }} \
+              --name ${{ github.event.repository.name }}-${{vars.ENV}} \
+              --network=${{vars.DOCKER_NETWORK}} \
               -e JWT_SECRET=${{secrets.JWT_SECRET}} \
               -e JWT_VALIDITY_IN_HOURS=${{vars.JWT_VALIDITY_IN_HOURS}} \
               -e JWT_ISSUER=${{vars.JWT_ISSUER}} \
