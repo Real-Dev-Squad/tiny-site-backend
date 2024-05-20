@@ -7,7 +7,7 @@
 ################################################################################
 # Create a stage for building the application.
 ARG GO_VERSION=1.21
-ARG PLATFORM_VERSION=linux/amd64
+ARG PLATFORM_VERSION=linux/arm64
 FROM --platform=${PLATFORM_VERSION} golang:${GO_VERSION} AS build
 WORKDIR /src
 COPY . .
