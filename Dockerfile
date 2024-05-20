@@ -10,6 +10,7 @@ ARG GO_VERSION=1.21
 ARG PLATFORM_VERSION=linux/amd64
 FROM --platform=${PLATFORM_VERSION} golang:${GO_VERSION} AS build
 WORKDIR /src
+COPY . .
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /go/pkg/mod/ to speed up subsequent builds.
@@ -27,6 +28,8 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,target=. \
     CGO_ENABLED=0 go build -o /bin/server .
+
+RUN CGO_ENABLED=0 go build -o /bin/bun ./cmd/bun/main.go
 
 ################################################################################
 # Create a new stage for running the application that contains the minimal
@@ -50,6 +53,15 @@ RUN --mount=type=cache,target=/var/cache/apk \
         && \
         update-ca-certificates
 
+# Copy the executable from the "build" stage.
+COPY --from=build /bin/server /bin/
+COPY --from=build /bin/bun /bin/bun/
+COPY entrypoint.sh /bin/entrypoint.sh
+COPY . /src
+
+# Make the entrypoint script executable
+RUN chmod +x /bin/entrypoint.sh
+
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/go/dockerfile-user-best-practices/
 ARG UID=10001
@@ -63,11 +75,8 @@ RUN adduser \
     appuser
 USER appuser
 
-# Copy the executable from the "build" stage.
-COPY --from=build /bin/server /bin/
-
 # Expose the port that the application listens on.
 EXPOSE 4001
 
 # What the container should run when it is started.
-ENTRYPOINT [ "/bin/server" ]
+ENTRYPOINT ["sh", "/bin/entrypoint.sh"]
