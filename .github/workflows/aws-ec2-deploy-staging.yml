@@ -9,6 +9,7 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment: staging
 
     steps:
@@ -30,7 +31,9 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}-${{vars.ENV}}:${{ github.sha }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
@@ -39,12 +42,12 @@ jobs:
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}-${{vars.ENV}}:${{ github.sha }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.sha }}
             docker stop ${{ github.event.repository.name }}-${{vars.ENV}} || true
             docker rm ${{ github.event.repository.name }}-${{vars.ENV}} || true
-            docker run \
-              -d -p ${{vars.PORT}}:${{vars.PORT}} \
+            docker run -d -p ${{vars.PORT}}:${{vars.PORT}} \
               --name ${{ github.event.repository.name }}-${{vars.ENV}} \
+              --expose 4010 \
               --network=${{vars.DOCKER_NETWORK}} \
               -e GIN_MODE=${{vars.GIN_MODE}}
               -e JWT_SECRET=${{secrets.JWT_SECRET}} \
@@ -58,4 +61,5 @@ jobs:
               -e GOOGLE_CLIENT_ID=${{secrets.GOOGLE_CLIENT_ID}} \
               -e GOOGLE_CLIENT_SECRET=${{secrets.GOOGLE_CLIENT_SECRET}} \
               -e GOOGLE_REDIRECT_URL=${{vars.GOOGLE_REDIRECT_URL}} \
-              -e ALLOWED_ORIGINS=${{vars.ALLOWED_ORIGINS}}
+              -e ALLOWED_ORIGINS=${{vars.ALLOWED_ORIGINS}} \
+              ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
