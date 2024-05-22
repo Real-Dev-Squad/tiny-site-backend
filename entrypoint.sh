@@ -6,6 +6,7 @@ check_database() {
     until nc -z -v -w10 $DB_HOST 5432
     do
         echo "Waiting for database connection..."
+        echo "$DB_HOST DB HOST"
         sleep 1
     done
 }
