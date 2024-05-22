@@ -29,7 +29,9 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,target=. \
     CGO_ENABLED=0 go build -o /bin/server .
 
-RUN CGO_ENABLED=0 go build -o /bin/bun ./cmd/bun/main.go
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+    --mount=type=bind,target=. \
+    CGO_ENABLED=0 go build -o /bin/bun ./cmd/bun/main.go
 
 ################################################################################
 # Create a new stage for running the application that contains the minimal

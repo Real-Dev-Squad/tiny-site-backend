@@ -2,7 +2,8 @@
 
 # Function to check if the database is ready
 check_database() {
-    until nc -z -v -w30 db 5432
+    
+    until nc -z -v -w10 $DB_HOST 5432
     do
         echo "Waiting for database connection..."
         sleep 1
