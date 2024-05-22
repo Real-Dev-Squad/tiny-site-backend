@@ -47,9 +47,8 @@ jobs:
             docker rm ${{ github.event.repository.name }}-${{vars.ENV}} || true
             docker run -d -p ${{vars.PORT}}:${{vars.PORT}} \
               --name ${{ github.event.repository.name }}-${{vars.ENV}} \
-              --expose 4010 \
               --network=${{vars.DOCKER_NETWORK}} \
-              -e GIN_MODE=${{vars.GIN_MODE}}
+              -e GIN_MODE=${{vars.GIN_MODE}} \
               -e JWT_SECRET=${{secrets.JWT_SECRET}} \
               -e JWT_VALIDITY_IN_HOURS=${{vars.JWT_VALIDITY_IN_HOURS}} \
               -e JWT_ISSUER=${{vars.JWT_ISSUER}} \
