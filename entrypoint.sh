@@ -23,7 +23,7 @@ main() {
     
     # Run the database migration.
     echo "Migrating the database..."
-    /bin/bun/bun db init
+    /bin/bun/bun db migrate
 
     # Run the main application
     echo "Starting the application..."

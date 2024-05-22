@@ -45,7 +45,7 @@ jobs:
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.sha }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:latest
             docker stop ${{ github.event.repository.name }}-${{vars.ENV}} || true
             docker rm ${{ github.event.repository.name }}-${{vars.ENV}} || true
             docker run -d -p ${{vars.PORT}}:${{vars.PORT}} \
@@ -66,4 +66,4 @@ jobs:
               -e GOOGLE_CLIENT_SECRET=${{secrets.GOOGLE_CLIENT_SECRET}} \
               -e GOOGLE_REDIRECT_URL=${{vars.GOOGLE_REDIRECT_URL}} \
               -e ALLOWED_ORIGINS=${{vars.ALLOWED_ORIGINS}} \
-              ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.sha }}
+              ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
