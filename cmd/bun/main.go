@@ -1,6 +1,7 @@
 package migration
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -14,36 +15,72 @@ import (
 )
 
 func RunMigrations() {
+    currentDir, err := os.Getwd()
+    if err != nil {
+        panic(err)
+    }
 
-	currentDir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
+    envFilePath := filepath.Join(currentDir, ".env")
+    utils.LoadEnv(envFilePath)
+    dsn := os.Getenv("DB_URL")
 
-	envFilePath := filepath.Join(currentDir, ".env")
+    db, err := utils.SetupDBConnection(dsn)
+    if err != nil {
+        log.Fatalf("failed to connect to the database: %v", err)
+        os.Exit(1)
+    }
+    defer db.Close()
 
-	utils.LoadEnv(envFilePath)
+    migrator := migrate.NewMigrator(db, migrations.Migrations)
 
-	dsn := os.Getenv("DB_URL")
+    err = migrator.Init(context.Background())
+    if err != nil {
+        log.Fatalf("failed to initialize migration tables: %v", err)
+    }
 
-	db, err := utils.SetupDBConnection(dsn)
-	if err != nil {
-		log.Fatalf("failed to connect to the database: %v", err)
-		os.Exit(1)
-	}
+    err = runMigrate(migrator)
+    if err != nil {
+        log.Fatalf("failed to run migrations: %v", err)
+    }
+}
 
-	app := &cli.App{
-		Name: "bun",
+func runMigrate(migrator *migrate.Migrator) error {
+    ctx := context.Background()
+    if err := migrator.Lock(ctx); err != nil {
+        return err
+    }
+    defer migrator.Unlock(ctx) // nolint: errcheck
 
-		Commands: []*cli.Command{
-			newDBCommand(migrate.NewMigrator(db, migrations.Migrations)),
-		},
-	}
-	if err := app.Run(os.Args); err != nil {
-		log.Fatal(err)
-	}
+    group, err := migrator.Migrate(ctx)
+    if err != nil {
+        return err
+    }
+    if group.IsZero() {
+        fmt.Println("there are no new migrations to run (database is up to date)")
+        return nil
+    }
+    fmt.Printf("migrated to %s\n", group)
+    return nil
+}
 
-	defer db.Close()
+func RegisterCLICommands() *cli.App {
+    dsn := os.Getenv("DB_URL")
+    db, err := utils.SetupDBConnection(dsn)
+    if err != nil {
+        log.Fatalf("failed to connect to the database: %v", err)
+    }
+    defer db.Close()
+
+    migrator := migrate.NewMigrator(db, migrations.Migrations)
+
+    app := &cli.App{
+        Name: "bun",
+        Commands: []*cli.Command{
+            newDBCommand(migrator),
+        },
+    }
+
+    return app
 }
 
 func newDBCommand(migrator *migrate.Migrator) *cli.Command {
