@@ -60,9 +60,10 @@ jobs:
               -e AUTH_REDIRECT_URL=${{vars.AUTH_REDIRECT_URL}} \
               -e DB_URL=postgresql://${{secrets.POSTGRES_USER}}:${{secrets.POSTGRES_PASSWORD}}@${{secrets.DB_HOST}}:${{secrets.DB_PORT}}/${{secrets.POSTGRES_DB}}?sslmode=disable \
               -e DB_HOST=${{secrets.DB_HOST}} \
+              -e DB_PORT=${{secrets.DB_PORT}} \
               -e DB_MAX_OPEN_CONNECTIONS=${{vars.DB_MAX_OPEN_CONNECTIONS}} \
               -e GOOGLE_CLIENT_ID=${{secrets.GOOGLE_CLIENT_ID}} \
               -e GOOGLE_CLIENT_SECRET=${{secrets.GOOGLE_CLIENT_SECRET}} \
               -e GOOGLE_REDIRECT_URL=${{vars.GOOGLE_REDIRECT_URL}} \
               -e ALLOWED_ORIGINS=${{vars.ALLOWED_ORIGINS}} \
-              ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
+              ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.sha }}
