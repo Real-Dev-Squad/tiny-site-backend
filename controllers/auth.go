@@ -62,8 +62,6 @@ func GoogleCallback(ctx *gin.Context, db *bun.DB) {
         return
     }
 
-    log.Printf("Google account info: %v", googleAccountInfo)
-
     var user models.User
 
     tx, err := db.BeginTx(ctx, nil)
@@ -90,8 +88,6 @@ func GoogleCallback(ctx *gin.Context, db *bun.DB) {
         return
     }
 
-    log.Printf("User count: %d", count)
-
     if count == 0 {
         newUser := &models.User{
             UserName: googleAccountInfo.Name,
@@ -110,15 +106,10 @@ func GoogleCallback(ctx *gin.Context, db *bun.DB) {
             return
         }
 
-        log.Printf("Rows affected: %d", rowsAffected)
-
         if rowsAffected == 0 {
             log.Println("No rows affected, user was not created.")
             return
         }
-
-        log.Printf("User created successfully: %v", newUser)
-
         user = *newUser
     }
 
@@ -134,8 +125,6 @@ func GoogleCallback(ctx *gin.Context, db *bun.DB) {
         ctx.JSON(http.StatusInternalServerError, gin.H{"message": "error"})
         return
     }
-
-    log.Printf("Generated token: %s", token)
 
     ctx.SetCookie("token", token, tokenExpiration, "/", domain, true, true)
     ctx.Redirect(http.StatusFound, authRedirectUrl)
