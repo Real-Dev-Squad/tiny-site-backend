@@ -7,8 +7,10 @@
 ################################################################################
 # Create a stage for building the application.
 ARG GO_VERSION=1.21
-FROM golang:${GO_VERSION} AS build
+ARG PLATFORM_VERSION=linux/arm64
+FROM --platform=${PLATFORM_VERSION} golang:${GO_VERSION} AS build
 WORKDIR /src
+COPY . .
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /go/pkg/mod/ to speed up subsequent builds.
@@ -27,6 +29,10 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,target=. \
     CGO_ENABLED=0 go build -o /bin/server .
 
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+    --mount=type=bind,target=. \
+    CGO_ENABLED=0 go build -o /bin/bun ./cmd/bun/main.go
+
 ################################################################################
 # Create a new stage for running the application that contains the minimal
 # runtime dependencies for the application. This often uses a different base
@@ -38,7 +44,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 # most recent version of that image when you build your Dockerfile. If
 # reproducability is important, consider using a versioned tag
 # (e.g., alpine:3.17.2) or SHA (e.g., alpine@sha256:c41ab5c992deb4fe7e5da09f67a8804a46bd0592bfdf0b1847dde0e0889d2bff).
-FROM alpine:latest AS final
+FROM alpine:3 AS final
 
 # Install any runtime dependencies that are needed to run your application.
 # Leverage a cache mount to /var/cache/apk/ to speed up subsequent builds.
@@ -48,6 +54,15 @@ RUN --mount=type=cache,target=/var/cache/apk \
         tzdata \
         && \
         update-ca-certificates
+
+# Copy the executable from the "build" stage.
+COPY --from=build /bin/server /bin/
+COPY --from=build /bin/bun /bin/bun/
+COPY entrypoint.sh /bin/entrypoint.sh
+COPY . /src
+
+# Make the entrypoint script executable
+RUN chmod +x /bin/entrypoint.sh
 
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/go/dockerfile-user-best-practices/
@@ -62,11 +77,8 @@ RUN adduser \
     appuser
 USER appuser
 
-# Copy the executable from the "build" stage.
-COPY --from=build /bin/server /bin/
-
 # Expose the port that the application listens on.
 EXPOSE 4001
 
 # What the container should run when it is started.
-ENTRYPOINT [ "/bin/server" ]
+ENTRYPOINT ["sh", "/bin/entrypoint.sh"]

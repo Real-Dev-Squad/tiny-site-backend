@@ -86,7 +86,7 @@ func newDBCommand(migrator *migrate.Migrator) *cli.Command {
 					if err := migrator.Lock(c.Context); err != nil {
 						return err
 					}
-					defer migrator.Unlock(c.Context) //nolint:errcheck
+					defer migrator.Unlock(c.Context)
 
 					group, err := migrator.Rollback(c.Context)
 					if err != nil {
