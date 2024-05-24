@@ -55,24 +55,36 @@ func GoogleCallback(ctx *gin.Context, db *bun.DB) {
     domain := os.Getenv("DOMAIN")
     authRedirectUrl := os.Getenv("AUTH_REDIRECT_URL")
 
-    user := new(models.User)
     googleAccountInfo, getInfoError := getUserInfoFromCode(code, getGoogleOAuthConfig(), ctx)
-
     if getInfoError != nil {
-        log.Fatal(getInfoError)
-        ctx.JSON(500, gin.H{
-            "message": "error",
-        })
+        log.Printf("Failed to get user info: %v", getInfoError)
+        ctx.JSON(http.StatusInternalServerError, gin.H{"message": "error"})
         return
     }
 
-    count, err := db.NewSelect().Model(user).Where("email = ?", googleAccountInfo.Email).ScanAndCount(ctx)
+    var user models.User
 
+    tx, err := db.BeginTx(ctx, nil)
     if err != nil {
-        log.Fatal(err)
-        ctx.JSON(500, gin.H{
-            "message": "error",
-        })
+        log.Printf("Failed to begin transaction: %v", err)
+        ctx.JSON(http.StatusInternalServerError, gin.H{"message": "error"})
+        return
+    }
+
+    defer func() {
+        if p := recover(); p != nil {
+            tx.Rollback()
+            panic(p)
+        } else if err != nil {
+            tx.Rollback()
+        } else {
+            err = tx.Commit()
+        }
+    }()
+
+    count, err := tx.NewSelect().Model(&user).Where("email = ?", googleAccountInfo.Email).ScanAndCount(ctx)
+    if err != nil && err.Error() != "sql: no rows in result set" {
+        log.Printf("Failed to query user: %v", err)
         return
     }
 
@@ -82,29 +94,40 @@ func GoogleCallback(ctx *gin.Context, db *bun.DB) {
             Email:    googleAccountInfo.Email,
         }
 
-        _, err := db.NewInsert().Model(newUser).Exec(ctx)
-
-        if err != nil {
-            log.Fatal(err)
-            ctx.JSON(500, gin.H{
-                "message": "error",
-            })
+        result, insertErr := tx.NewInsert().Model(newUser).Exec(ctx)
+        if insertErr != nil {
+            log.Printf("Failed to create new user: %v", insertErr)
             return
         }
+
+        rowsAffected, err := result.RowsAffected()
+        if err != nil {
+            log.Printf("Failed to get rows affected: %v", err)
+            return
+        }
+
+        if rowsAffected == 0 {
+            log.Println("No rows affected, user was not created.")
+            return
+        }
+        user = *newUser
     }
 
-    token, err := utils.GenerateToken(user)
-
+    err = tx.NewSelect().Model(&user).Where("email = ?", googleAccountInfo.Email).Scan(ctx)
     if err != nil {
-        log.Fatal(err)
-        ctx.JSON(500, gin.H{
-            "message": "error",
-        })
+        log.Printf("Failed to re-query user after insertion: %v", err)
+        return
+    }
+
+    token, err := utils.GenerateToken(&user)
+    if err != nil {
+        log.Printf("Failed to generate token: %v", err)
+        ctx.JSON(http.StatusInternalServerError, gin.H{"message": "error"})
         return
     }
 
     ctx.SetCookie("token", token, tokenExpiration, "/", domain, true, true)
-    ctx.Redirect(302, authRedirectUrl)
+    ctx.Redirect(http.StatusFound, authRedirectUrl)
 }
 
 func Logout(ctx *gin.Context) {
