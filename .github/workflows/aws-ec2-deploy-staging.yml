@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - develop
-      - feat/aws-deploy # Remove before merting this PR to dev
 
 jobs:
   build-and-push:
