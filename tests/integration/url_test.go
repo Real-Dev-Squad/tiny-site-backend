@@ -178,6 +178,28 @@ func (suite *AppTestSuite) TestRedirectShortURLNotFound() {
 	assert.Equal(suite.T(), http.StatusNotFound, w.Code, "Expected status code to be 404 for non-existent short URL")
 }
 
+// TestRedirectShortURLWithoutScheme tests the redirection of a short URL to the original URL without a scheme (http:// or https://).
+func (suite *AppTestSuite) TestRedirectShortURLWithoutScheme() {
+	router := gin.Default()
+	router.GET("/v1/tinyurl/:shortURL", func(ctx *gin.Context) {
+		controller.RedirectShortURL(ctx, suite.db)
+	})
+
+	// Create a tiny URL without a scheme
+	tinyURLWithoutScheme := "37fff02c"
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/v1/tinyurl/%s", tinyURLWithoutScheme), nil)
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusMovedPermanently, w.Code, "Expected status code to be 301 for successful redirection")
+
+	actualLocation := w.Result().Header.Get("Location")
+
+	expectedPart := "example.com/1"
+	assert.Contains(suite.T(), actualLocation, expectedPart, "Expected redirection to include the correct URL part")
+}
+
 // TestGetAllURLsSuccess tests the successful retrieval of all URLs for a user.
 func (suite *AppTestSuite) TestGetAllURLsSuccess() {
 	router := gin.Default()
