@@ -60,13 +60,15 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 			body.ShortUrl = generatedShortURL
 		}
 	}
-
+	count, _ := db.NewSelect().Model(models.Tinyurl{}).Where("user_id = ?", body.UserID).Count(ctx)
 	body.CreatedAt = time.Now().UTC()
 	if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
-		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
-			Message: "Failed to insert into the database: " + err.Error(),
-		})
-		return
+		if count < 50 {
+			ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+				Message: "Failed to insert into the database: " + err.Error(),
+			})
+			return
+		}
 	}
 
 	ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
