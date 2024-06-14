@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS tiny_url (
   created_by text NOT NULL,
   access_count bigint DEFAULT 0,
   last_accessed_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC'),
-  isDeleted bool null default FALSE,
+  is_deleted bool null default FALSE,
   deleted_at timestamp WITH TIME ZONE NULL
 );
 
