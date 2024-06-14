@@ -17,14 +17,14 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 
 	if err := ctx.BindJSON(&body); err != nil {
 		ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
-			Message: "Invalid JSON format: " + err.Error(),
+			Message: "Invalid Request.",
 		})
 		return
 	}
 
 	if body.OriginalUrl == "" {
 		ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
-			Message: "Original URL is required",
+			Message: "URL is required",
 		})
 		return
 	}
@@ -32,7 +32,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	var existingOriginalURL models.Tinyurl
 	if err := db.NewSelect().Model(&existingOriginalURL).Where("original_url = ?", body.OriginalUrl).Limit(1).Scan(ctx); err == nil {
 		ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
-			Message:  "Tiny URL already exists for the original URL",
+			Message:  "Shortened URL already exists",
 			ShortURL: existingOriginalURL.ShortUrl,
 		})
 		return
@@ -62,13 +62,17 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	}
 	count, _ := db.NewSelect().Model(models.Tinyurl{}).Where("user_id = ?", body.UserID).Count(ctx)
 	body.CreatedAt = time.Now().UTC()
+	if count >= 50 {
+		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+			Message: "Url Limit Reached, Please Delete to Create New !",
+		})
+		return
+	}
 	if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
-		if count < 50 {
-			ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
-				Message: "Failed to insert into the database: " + err.Error(),
-			})
-			return
-		}
+		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+			Message: "OOPS!!, Unable to process your request at this moment, Please try after sometime. ",
+		})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
@@ -160,7 +164,7 @@ func GetAllURLs(ctx *gin.Context, db *bun.DB) {
 }
 func DeleteURL(ctx *gin.Context, db *bun.DB) {
 	id, _ := ctx.Params.Get("id")
-	_, err := db.NewUpdate().Model(&models.Tinyurl{}).Set("is_deleted=?", true).Where("id = ?", id).Exec(ctx)
+	_, err := db.NewUpdate().Model(&models.Tinyurl{}).Set("is_deleted=?", true).Set("deleted_at=?", time.Now().UTC()).Where("id = ?", id).Exec(ctx)
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, dtos.UserURLsResponse{
