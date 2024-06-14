@@ -10,7 +10,8 @@ CREATE TABLE tiny_url (
   created_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC'),
   created_by text NOT NULL,
   access_count bigint DEFAULT 0,
-  last_accessed_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC')
+  last_accessed_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC'),
+  is_deleted bit null DEFAULT 0
 );
 
 COMMIT;
