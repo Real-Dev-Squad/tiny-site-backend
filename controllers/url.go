@@ -168,7 +168,7 @@ func DeleteURL(ctx *gin.Context, db *bun.DB) {
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, dtos.UserURLsResponse{
-			Message: "No URLs found for the user",
+			Message: "No URLs found",
 		})
 		return
 	}
