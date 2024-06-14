@@ -174,7 +174,7 @@ func DeleteURL(ctx *gin.Context, db *bun.DB) {
 	}
 
 	ctx.JSON(http.StatusOK, dtos.UserURLsResponse{
-		Message: "Url Set to deleted",
+		Message: "Url deleted",
 	})
 }
 
