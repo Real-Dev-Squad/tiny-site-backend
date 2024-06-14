@@ -29,4 +29,7 @@ func TinyURLRoutes(rg *gin.RouterGroup, db *bun.DB) {
 	redirect.GET("/:shortURL", func(ctx *gin.Context) {
 		controller.RedirectShortURL(ctx, db)
 	})
+	urls.DELETE("/:id", func(ctx *gin.Context) {
+		controller.DeleteURL(ctx, db)
+	})
 }
