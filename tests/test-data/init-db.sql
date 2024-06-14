@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS tiny_url (
   created_by text NOT NULL,
   access_count bigint DEFAULT 0,
   last_accessed_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC')
+  is_deleted bool null default false
+  deleted_at timestamp WITH TIME ZONE NULL
 );
 
 -- Insert data into the tiny_url table
