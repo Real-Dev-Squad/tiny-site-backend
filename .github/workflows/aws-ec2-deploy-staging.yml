@@ -4,12 +4,13 @@ on:
   push:
     branches:
       - develop
+      - main
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment: staging
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
 
     steps:
       - name: Checkout Repository
