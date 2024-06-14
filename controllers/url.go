@@ -64,7 +64,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 
 	body.CreatedAt = time.Now().UTC()
 
-	if count >= 3 {
+	if count >= 50 {
 
 		ctx.JSON(http.StatusForbidden, dtos.URLCreationResponse{
 			Message: "Url Limit Reached, Please Delete to Create New !",
