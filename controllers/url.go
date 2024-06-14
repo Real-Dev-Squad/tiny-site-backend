@@ -60,14 +60,18 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 			body.ShortUrl = generatedShortURL
 		}
 	}
-	count, _ := db.NewSelect().Model(models.Tinyurl{}).Where("user_id = ?", body.UserID).Count(ctx)
+	count, _ := db.NewSelect().Model(&models.Tinyurl{}).Where("user_id = ?", body.UserID).Where("is_deleted=?", false).Count(ctx)
+
 	body.CreatedAt = time.Now().UTC()
-	if count >= 50 {
-		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+
+	if count >= 3 {
+
+		ctx.JSON(http.StatusForbidden, dtos.URLCreationResponse{
 			Message: "Url Limit Reached, Please Delete to Create New !",
 		})
 		return
 	}
+
 	if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
 		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
 			Message: "OOPS!!, Unable to process your request at this moment, Please try after sometime. ",
@@ -138,7 +142,7 @@ func GetAllURLs(ctx *gin.Context, db *bun.DB) {
 
 	err := db.NewSelect().
 		Model(&tinyURLs).
-		Where("user_id = ?", userID).
+		Where("user_id = ?", userID).Where("is_deleted=?", false).
 		Order("created_at DESC").
 		Scan(ctx, &tinyURLs)
 
@@ -154,6 +158,8 @@ func GetAllURLs(ctx *gin.Context, db *bun.DB) {
 			OriginalURL: tinyURL.OriginalUrl,
 			ShortURL:    tinyURL.ShortUrl,
 			CreatedAt:   tinyURL.CreatedAt,
+			ID:          tinyURL.ID,
+			UserID:      tinyURL.UserID,
 		})
 	}
 
