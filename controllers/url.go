@@ -30,7 +30,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	}
 
 	var existingOriginalURL models.Tinyurl
-	if err := db.NewSelect().Model(&existingOriginalURL).Where("original_url = ?", body.OriginalUrl).Limit(1).Scan(ctx); err == nil {
+	if err := db.NewSelect().Model(&existingOriginalURL).Where("original_url = ?", body.OriginalUrl).Where("user_id=?", body.UserID).Where("is_deleted=?", false).Limit(1).Scan(ctx); err == nil {
 		ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
 			Message:  "Shortened URL already exists",
 			ShortURL: existingOriginalURL.ShortUrl,
