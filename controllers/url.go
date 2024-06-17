@@ -66,7 +66,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 
 	body.CreatedAt = time.Now().UTC()
 	utils.LoadEnv(".env")
-	maxLimit := os.Getenv("DB_URL")
+	maxLimit := os.Getenv("MAX_URL_COUNT")
 
 	intVar, err := strconv.ParseInt(maxLimit, 0, 64)
 
