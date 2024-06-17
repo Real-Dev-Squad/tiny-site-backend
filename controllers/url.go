@@ -71,7 +71,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	if err != nil && int64(count) >= intVar {
 
 		ctx.JSON(http.StatusForbidden, dtos.URLCreationResponse{
-			Message: "Url Limit Reached, Please Delete to Create New !",
+			Message: "You've reached the limit of " + config.Max_Url_Count + "for URLs. Delete one to add a new one !!",
 		})
 		return
 	}
