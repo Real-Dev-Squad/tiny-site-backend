@@ -2,11 +2,11 @@ package controller
 
 import (
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/Real-Dev-Squad/tiny-site-backend/config"
 	"github.com/Real-Dev-Squad/tiny-site-backend/dtos"
 	"github.com/Real-Dev-Squad/tiny-site-backend/models"
 	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
@@ -65,9 +65,8 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	count, _ := db.NewSelect().Model(&models.Tinyurl{}).Where("user_id = ?", body.UserID).Where("is_deleted=?", false).Count(ctx)
 
 	body.CreatedAt = time.Now().UTC()
-	maxLimit := os.Getenv("MAX_URL_COUNT")
 
-	intVar, err := strconv.ParseInt(maxLimit, 0, 64)
+	intVar, err := strconv.ParseInt(config.Max_Url_Count, 0, 64)
 
 	if err != nil && int64(count) >= intVar {
 
