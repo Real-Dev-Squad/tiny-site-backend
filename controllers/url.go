@@ -2,6 +2,8 @@ package controller
 
 import (
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -63,8 +65,12 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	count, _ := db.NewSelect().Model(&models.Tinyurl{}).Where("user_id = ?", body.UserID).Where("is_deleted=?", false).Count(ctx)
 
 	body.CreatedAt = time.Now().UTC()
+	utils.LoadEnv(".env")
+	maxLimit := os.Getenv("DB_URL")
 
-	if count >= 50 {
+	intVar, err := strconv.ParseInt(maxLimit, 0, 64)
+
+	if err != nil && int64(count) >= intVar {
 
 		ctx.JSON(http.StatusForbidden, dtos.URLCreationResponse{
 			Message: "Url Limit Reached, Please Delete to Create New !",
