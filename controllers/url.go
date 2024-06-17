@@ -65,7 +65,6 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	count, _ := db.NewSelect().Model(&models.Tinyurl{}).Where("user_id = ?", body.UserID).Where("is_deleted=?", false).Count(ctx)
 
 	body.CreatedAt = time.Now().UTC()
-	utils.LoadEnv(".env")
 	maxLimit := os.Getenv("MAX_URL_COUNT")
 
 	intVar, err := strconv.ParseInt(maxLimit, 0, 64)
