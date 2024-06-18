@@ -40,6 +40,7 @@ func findAndLoadEnv(envFile string) {
 			if err := godotenv.Load(envPath); err != nil {
 				logger.Fatal("Error loading .env file:", err)
 			}
+			logger.Info("Loaded environment variables from:", envPath)
 			return
 		}
 
@@ -50,7 +51,7 @@ func findAndLoadEnv(envFile string) {
 		cwd = parent
 	}
 
-	logger.Fatal("Could not find .env file")
+	logger.Fatal("Could not find .env file at:", envFile)
 }
 
 func loadEnv() {
@@ -85,7 +86,6 @@ func init() {
 
 func loadConfig() {
 	JwtSecret = getEnvVar("JWT_SECRET")
-	// JwtValidity = getEnvInt("JWT_VALIDITY_IN_DAYS")
 	JwtIssuer = getEnvVar("JWT_ISSUER")
 
 	Domain = getEnvVar("DOMAIN")
