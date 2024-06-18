@@ -64,7 +64,7 @@ func loadEnv() {
 
 	envFile := ".env"
 	if env == "test" {
-		envFile = "environments/env.test"
+		envFile = "environments/test.env"
 	}
 
 	findAndLoadEnv(envFile)
