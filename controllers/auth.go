@@ -2,11 +2,13 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"sync"
 
+	"github.com/Real-Dev-Squad/tiny-site-backend/config"
 	"github.com/Real-Dev-Squad/tiny-site-backend/models"
 	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
 	"github.com/gin-gonic/gin"
@@ -20,10 +22,6 @@ import (
 var (
 	googleOAuthConfig *oauth2.Config
 	googleConfigMu    sync.Mutex
-)
-
-var (
-    tokenExpiration = 31536000
 )
 
 func getGoogleOAuthConfig() *oauth2.Config {
@@ -125,8 +123,8 @@ func GoogleCallback(ctx *gin.Context, db *bun.DB) {
         ctx.JSON(http.StatusInternalServerError, gin.H{"message": "error"})
         return
     }
-
-    ctx.SetCookie("token", token, tokenExpiration, "/", domain, true, true)
+    fmt.Println("config token expiration", config.TokenExpiration)
+    ctx.SetCookie("token", token, config.TokenExpiration, "/", domain, true, true)
     ctx.Redirect(http.StatusFound, authRedirectUrl)
 }
 

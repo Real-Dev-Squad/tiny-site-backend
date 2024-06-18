@@ -3,9 +3,8 @@ package utils
 import (
 	"database/sql"
 	"fmt"
-	"os"
-	"strconv"
 
+	"github.com/Real-Dev-Squad/tiny-site-backend/config"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -13,16 +12,9 @@ import (
 )
 
 func SetupDBConnection(dsn string) (*bun.DB, error) {
-	
-	maxOpenConnectionsStr := os.Getenv("DB_MAX_OPEN_CONNECTIONS")
-	maxOpenConnections, err := strconv.Atoi(maxOpenConnectionsStr)
-
-	if err != nil || maxOpenConnectionsStr == "" {
-		maxOpenConnections = 10
-	}
-
+	maxOpenConnections := config.DbMaxOpenConnections
+	fmt.Println("max open connections: ", maxOpenConnections)
 	pgDB := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
-
 	pgDB.SetMaxOpenConns(maxOpenConnections)
 
 	db := bun.NewDB(pgDB, pgdialect.New())

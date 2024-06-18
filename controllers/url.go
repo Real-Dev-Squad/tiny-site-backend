@@ -1,8 +1,8 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -32,7 +32,11 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	}
 
 	var existingOriginalURL models.Tinyurl
-	if err := db.NewSelect().Model(&existingOriginalURL).Where("original_url = ?", body.OriginalUrl).Where("user_id=?", body.UserID).Where("is_deleted=?", false).Limit(1).Scan(ctx); err == nil {
+	if err := db.NewSelect().Model(&existingOriginalURL).
+		Where("original_url = ?", body.OriginalUrl).
+		Where("user_id = ?", body.UserID).
+		Where("is_deleted = ?", false).
+		Scan(ctx); err == nil {
 		ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
 			Message:  "Shortened URL already exists",
 			ShortURL: existingOriginalURL.ShortUrl,
@@ -49,7 +53,10 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		}
 
 		var existingURL models.Tinyurl
-		if err := db.NewSelect().Model(&existingURL).Where("short_url = ?", body.ShortUrl).Limit(1).Scan(ctx); err == nil {
+		if err := db.NewSelect().Model(&existingURL).
+			Where("short_url = ?", body.ShortUrl).
+			Limit(1).
+			Scan(ctx); err == nil {
 			ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
 				Message: "Custom short URL already exists",
 			})
@@ -58,20 +65,34 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	} else {
 		generatedShortURL := utils.GenerateMD5Hash(body.OriginalUrl)
 		var existingURL models.Tinyurl
-		if err := db.NewSelect().Model(&existingURL).Where("short_url = ?", generatedShortURL).Limit(1).Scan(ctx); err != nil {
+		if err := db.NewSelect().Model(&existingURL).
+			Where("short_url = ?", generatedShortURL).
+			Limit(1).
+			Scan(ctx); err != nil {
 			body.ShortUrl = generatedShortURL
 		}
 	}
-	count, _ := db.NewSelect().Model(&models.Tinyurl{}).Where("user_id = ?", body.UserID).Where("is_deleted=?", false).Count(ctx)
 
+	// Count the number of existing URLs for the user
+	count, err := db.NewSelect().
+		Model(&models.Tinyurl{}).
+		Where("user_id = ?", body.UserID).
+		Where("is_deleted = ?", false).
+		Count(ctx)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+			Message: "Failed to check URL count",
+		})
+		return
+	}
+
+	fmt.Println("count ++++", count)
 	body.CreatedAt = time.Now().UTC()
 
-	intVar, err := strconv.ParseInt(config.Max_Url_Count, 0, 64)
-
-	if err != nil && int64(count) >= intVar {
-
+	if count >= config.MaxUrlCount {
 		ctx.JSON(http.StatusForbidden, dtos.URLCreationResponse{
-			Message: "Url Limit Reached, Please Delete to Create New !",
+			Message: "URL Limit Reached, Please Delete to Create New !",
 		})
 		return
 	}
