@@ -2,10 +2,8 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"sync"
 
 	"github.com/Real-Dev-Squad/tiny-site-backend/config"
@@ -22,6 +20,8 @@ import (
 var (
 	googleOAuthConfig *oauth2.Config
 	googleConfigMu    sync.Mutex
+    domain = config.Domain
+    authRedirectUrl = config.AuthRedirectUrl
 )
 
 func getGoogleOAuthConfig() *oauth2.Config {
@@ -30,9 +30,9 @@ func getGoogleOAuthConfig() *oauth2.Config {
 
 	if googleOAuthConfig == nil {
 		googleOAuthConfig = &oauth2.Config{
-			ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-			ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-			RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
+			ClientID:     config.AuthRedirectUrl,
+			ClientSecret: config.GoogleClientId,
+			RedirectURL: config.GoogleRedirectUrl,
 			Scopes: []string{
 				"https://www.googleapis.com/auth/userinfo.email",
 				"https://www.googleapis.com/auth/userinfo.profile",
@@ -50,8 +50,6 @@ func GoogleLogin(ctx *gin.Context) {
 
 func GoogleCallback(ctx *gin.Context, db *bun.DB) {
     code := ctx.Query("code")
-    domain := os.Getenv("DOMAIN")
-    authRedirectUrl := os.Getenv("AUTH_REDIRECT_URL")
 
     googleAccountInfo, getInfoError := getUserInfoFromCode(code, getGoogleOAuthConfig(), ctx)
     if getInfoError != nil {
@@ -123,14 +121,11 @@ func GoogleCallback(ctx *gin.Context, db *bun.DB) {
         ctx.JSON(http.StatusInternalServerError, gin.H{"message": "error"})
         return
     }
-    fmt.Println("config token expiration", config.TokenExpiration)
     ctx.SetCookie("token", token, config.TokenExpiration, "/", domain, true, true)
     ctx.Redirect(http.StatusFound, authRedirectUrl)
 }
 
 func Logout(ctx *gin.Context) {
-	domain := os.Getenv("DOMAIN")
-	authRedirectUrl := os.Getenv("AUTH_REDIRECT_URL")
 
 	ctx.SetCookie("token", "", -1, "/", domain, false, true)
 	ctx.Redirect(http.StatusFound, authRedirectUrl)

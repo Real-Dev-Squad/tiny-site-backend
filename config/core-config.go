@@ -24,6 +24,7 @@ var (
 	JwtSecret           string
 	JwtValidity         int
 	JwtIssuer           string
+	AllowedOrigin		string
 )
 
 // findAndLoadEnv attempts to load the .env file from the current directory or any parent directory.
@@ -84,7 +85,7 @@ func init() {
 
 func loadConfig() {
 	JwtSecret = getEnvVar("JWT_SECRET")
-	JwtValidity = getEnvInt("JWT_VALIDITY_IN_DAYS")
+	// JwtValidity = getEnvInt("JWT_VALIDITY_IN_DAYS")
 	JwtIssuer = getEnvVar("JWT_ISSUER")
 
 	Domain = getEnvVar("DOMAIN")
@@ -99,6 +100,8 @@ func loadConfig() {
 
 	MaxUrlCount = getEnvInt("Max_Url_Count")
 	TokenExpiration = getEnvInt("TokenExpiration")
+
+	AllowedOrigin = getEnvVar("ALLOWED_ORIGINS")
 }
 
 func getEnvVar(key string) string {
