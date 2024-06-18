@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -87,20 +86,11 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		})
 		return
 	}
-
-	fmt.Println("count ++++", count)
 	body.CreatedAt = time.Now().UTC()
 
 	if count >= config.MaxUrlCount {
 		ctx.JSON(http.StatusForbidden, dtos.URLCreationResponse{
 			Message: "You've reached the limit of " + strconv.Itoa(config.MaxUrlCount) + " for URLs. Delete one to add a new one !!",
-		})
-		return
-	}
-	
-	if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
-		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
-			Message: "OOPS!!, Unable to process your request at this moment, Please try after sometime. ",
 		})
 		return
 	}
