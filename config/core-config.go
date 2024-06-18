@@ -1,9 +1,9 @@
 package config
 
 import (
+	"fmt"
 	"os"
-	"path"
-	"runtime"
+	"path/filepath"
 	"strconv"
 
 	"github.com/Real-Dev-Squad/tiny-site-backend/logger"
@@ -21,68 +21,99 @@ var (
 	GoogleClientSecret  string
 	GoogleRedirectUrl   string
 	TokenExpiration     int
-	JwtSecret			string
-	JwtValidity		    int
-	JwtIssuer			string
-
+	JwtSecret           string
+	JwtValidity         int
+	JwtIssuer           string
 )
+
+// findAndLoadEnv attempts to load the .env file from the current directory or any parent directory.
+func findAndLoadEnv(envFile string) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		logger.Fatal("Could not get current working directory:", err)
+	}
+
+	for {
+		envPath := filepath.Join(cwd, envFile)
+		if _, err := os.Stat(envPath); err == nil {
+			if err := godotenv.Load(envPath); err != nil {
+				logger.Fatal("Error loading .env file:", err)
+			}
+			return
+		}
+
+		parent := filepath.Dir(cwd)
+		if parent == cwd {
+			break
+		}
+		cwd = parent
+	}
+
+	logger.Fatal("Could not find .env file")
+}
 
 func loadEnv() {
 	env := os.Getenv("ENV")
-
-	// If the environment is production, we don't need to load the .env file
+	// If the environment is production or staging, we don't need to load the .env file
 	// we assume that the environment variables are already set
 	if env == "production" || env == "staging" {
 		return
 	}
 
+	envFile := ".env"
 	if env == "test" {
-		_, filename, _, _ := runtime.Caller(0)
-		dir := path.Join(path.Dir(filename), "../..")
-
-		if err := os.Chdir(dir); err != nil {
-			panic(err)
-		}
-
-		if err := godotenv.Load(".env"); err != nil {
-			logger.Error("Error loading .env file.", err)
-		}
-
-		return
+		envFile = "environments/env.test"
 	}
 
-	if err := godotenv.Load(".env"); err != nil {
-		logger.Fatal("Error loading .env file")
-	}
+	findAndLoadEnv(envFile)
 }
 
 func init() {
 	loadEnv()
 
 	env := os.Getenv("ENV")
-
 	if env == "" {
 		Env = "dev"
 	} else {
 		Env = env
 	}
 
-	JwtSecret = os.Getenv("JWT_SECRET")
-	JwtValidity, _ = strconv.Atoi(os.Getenv("JWT_VALIDITY_IN_DAYS"))
-	JwtIssuer = os.Getenv("JWT_ISSUER")
-
-	Domain = os.Getenv("DOMAIN")
-	AuthRedirectUrl = os.Getenv("AUTH_REDIRECT_URL")
-
-	DbUrl = os.Getenv("DB_URL")
-	DbMaxOpenConnections, _ = strconv.Atoi(os.Getenv("DB_MAX_OPEN_CONNECTIONS"))
-
-	GoogleClientId = os.Getenv("GOOGLE_CLIENT_ID")
-	GoogleClientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
-	GoogleRedirectUrl = os.Getenv("GOOGLE_REDIRECT_URL")
-
-	MaxUrlCount, _ =  strconv.Atoi(os.Getenv("Max_Url_Count"))
-	TokenExpiration, _ =  strconv.Atoi(os.Getenv("TokenExpiration"))
-
+	loadConfig()
 	logger.Info("Loaded environment variables")
+}
+
+func loadConfig() {
+	JwtSecret = getEnvVar("JWT_SECRET")
+	JwtValidity = getEnvInt("JWT_VALIDITY_IN_DAYS")
+	JwtIssuer = getEnvVar("JWT_ISSUER")
+
+	Domain = getEnvVar("DOMAIN")
+	AuthRedirectUrl = getEnvVar("AUTH_REDIRECT_URL")
+
+	DbUrl = getEnvVar("DB_URL")
+	DbMaxOpenConnections = getEnvInt("DB_MAX_OPEN_CONNECTIONS")
+
+	GoogleClientId = getEnvVar("GOOGLE_CLIENT_ID")
+	GoogleClientSecret = getEnvVar("GOOGLE_CLIENT_SECRET")
+	GoogleRedirectUrl = getEnvVar("GOOGLE_REDIRECT_URL")
+
+	MaxUrlCount = getEnvInt("Max_Url_Count")
+	TokenExpiration = getEnvInt("TokenExpiration")
+}
+
+func getEnvVar(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		logger.Fatal(fmt.Sprintf("Environment variable %s not set", key))
+	}
+	return value
+}
+
+func getEnvInt(key string) int {
+	valueStr := os.Getenv(key)
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("Error parsing environment variable %s: %v", key, err))
+	}
+	return value
 }
