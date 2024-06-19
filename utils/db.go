@@ -13,7 +13,6 @@ import (
 
 func SetupDBConnection(dsn string) (*bun.DB, error) {
 	maxOpenConnections := config.DbMaxOpenConnections
-	fmt.Println("max open connections: ", maxOpenConnections)
 	pgDB := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	pgDB.SetMaxOpenConns(maxOpenConnections)
 

@@ -27,7 +27,6 @@ var (
 	AllowedOrigin		string
 )
 
-// findAndLoadEnv attempts to load the .env file from the current directory or any parent directory.
 func findAndLoadEnv(envFile string) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -56,8 +55,6 @@ func findAndLoadEnv(envFile string) {
 
 func loadEnv() {
 	env := os.Getenv("ENV")
-	// If the environment is production or staging, we don't need to load the .env file
-	// we assume that the environment variables are already set
 	if env == "production" || env == "staging" {
 		return
 	}

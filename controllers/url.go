@@ -73,7 +73,6 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		}
 	}
 
-	// Count the number of existing URLs for the user
 	count, err := db.NewSelect().
 		Model(&models.Tinyurl{}).
 		Where("user_id = ?", body.UserID).
