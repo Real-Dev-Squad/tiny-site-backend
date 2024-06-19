@@ -108,7 +108,7 @@ func (suite *AppTestSuite) TestCreateTinyURLCustomShortURLExists() {
 
 	requestBody := map[string]interface{}{
 		"OriginalUrl": "https://rds.com",
-		"ShortUrl":    "short",
+		"ShortUrl":    "37fff",
 		"UserId":      1,
 	}
 	requestJSON, _ := json.Marshal(requestBody)
@@ -127,7 +127,7 @@ func (suite *AppTestSuite) TestCreateTinyURLExistingOriginalURL() {
 		controller.CreateTinyURL(ctx, suite.db)
 	})
 
-	existingOriginalURL := "https://example.com"
+	existingOriginalURL := "https://www.example.com/1"
 
 	requestBody := map[string]interface{}{
 		"OriginalUrl": existingOriginalURL,
@@ -142,7 +142,7 @@ func (suite *AppTestSuite) TestCreateTinyURLExistingOriginalURL() {
 
 	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for existing original URL")
 
-	expectedResponse := `{"message":"Shortened URL already exists", "shortUrl":"short","shortUrl":"short","createdAt":"0001-01-01T00:00:00Z"}`
+	expectedResponse := `{"message":"Shortened URL already exists", "shortUrl":"37fff","createdAt":"0001-01-01T00:00:00Z"}`
 	assert.JSONEq(suite.T(), expectedResponse, w.Body.String(), "Response body does not match expected JSON")
 }
 
