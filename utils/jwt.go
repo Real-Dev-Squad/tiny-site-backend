@@ -2,8 +2,6 @@ package utils
 
 import (
 	"errors"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/Real-Dev-Squad/tiny-site-backend/config"
@@ -18,11 +16,7 @@ func GenerateToken(user *models.User) (string, error) {
 	issuer := config.JwtIssuer
 	key := []byte(config.JwtSecret)
 
-	tokenValidityInHours, err := strconv.ParseInt(os.Getenv("JWT_VALIDITY_IN_HOURS"), 10, 64)
-	if err != nil {
-		return "", err
-	}
-
+	tokenValidityInHours := config.JwtValidity
 
 	tokenExpiryTime := time.Now().Add(time.Duration(tokenValidityInHours) * time.Hour).UTC().Format(time.RFC3339)
 

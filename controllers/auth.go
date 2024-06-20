@@ -20,8 +20,8 @@ import (
 var (
 	googleOAuthConfig *oauth2.Config
 	googleConfigMu    sync.Mutex
-    domain = config.Domain
-    authRedirectUrl = config.AuthRedirectUrl
+	domain            = config.Domain
+	authRedirectUrl   = config.AuthRedirectUrl
 )
 
 func getGoogleOAuthConfig() *oauth2.Config {
@@ -30,9 +30,9 @@ func getGoogleOAuthConfig() *oauth2.Config {
 
 	if googleOAuthConfig == nil {
 		googleOAuthConfig = &oauth2.Config{
-			ClientID:     config.AuthRedirectUrl,
-			ClientSecret: config.GoogleClientId,
-			RedirectURL: config.GoogleRedirectUrl,
+			ClientID:     config.GoogleClientId,
+			ClientSecret: config.GoogleClientSecret,
+			RedirectURL:  config.GoogleRedirectUrl,
 			Scopes: []string{
 				"https://www.googleapis.com/auth/userinfo.email",
 				"https://www.googleapis.com/auth/userinfo.profile",
