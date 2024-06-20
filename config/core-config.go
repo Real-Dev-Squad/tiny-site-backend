@@ -102,6 +102,7 @@ func loadConfig() {
 	AllowedOrigin = getEnvVar("ALLOWED_ORIGINS")
 
 	Port = getEnvVar("PORT")
+	JwtValidity = getEnvInt("JWT_VALIDITY_IN_HOURS")
 }
 
 func getEnvVar(key string) string {
