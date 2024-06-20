@@ -25,6 +25,7 @@ var (
 	JwtValidity         int
 	JwtIssuer           string
 	AllowedOrigin		string
+	Port                string
 )
 
 func findAndLoadEnv(envFile string) {
@@ -99,6 +100,8 @@ func loadConfig() {
 	TokenExpiration = getEnvInt("TokenExpiration")
 
 	AllowedOrigin = getEnvVar("ALLOWED_ORIGINS")
+
+	Port = getEnvVar("PORT")
 }
 
 func getEnvVar(key string) string {
