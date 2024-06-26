@@ -126,7 +126,6 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
 		Message:   "Tiny URL created successfully",
 		ShortURL:  body.ShortUrl,
-		CreatedAt: body.CreatedAt,
 		URLCount:  updatedCount,
 	})
 }
