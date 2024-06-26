@@ -3,7 +3,7 @@ BEGIN;
 CREATE TABLE users (
   id bigserial PRIMARY KEY,
   username varchar(256) UNIQUE NOT NULL,
-  email varchar(256) UNIQUE NOT NULL,
+  email varchar UNIQUE NOT NULL,
   is_verified boolean DEFAULT false,
   password varchar(128) NOT NULL,
   created_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC'),
