@@ -6,6 +6,7 @@ type URLCreationResponse struct {
 	Message   string    `json:"message"`
 	ShortURL  string    `json:"shortUrl,omitempty"`
 	CreatedAt time.Time `json:"createdAt,omitempty"`
+	URLCount  int       `json:"urlCount"`
 }
 type UserURLsResponse struct {
 	Message string       `json:"message"`
