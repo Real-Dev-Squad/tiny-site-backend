@@ -97,26 +97,37 @@ func (suite *AppTestSuite) TestGetSelfUserNonExistingUser() {
 }
 
 func (suite *AppTestSuite) TestIncrementURLCount() {
-	ctx := gin.Context{}
-
-	err := utils.IncrementURLCount(1, suite.db, &ctx)
-	assert.NoError(suite.T(), err)
+	ctx, _ := gin.CreateTestContext(nil)
 
 	user := new(models.User)
+	err := suite.db.NewSelect().Model(user).Where("id = ?", 1).Scan(context.Background())
+	assert.NoError(suite.T(), err)
+	user.URLCount = 0
+	_, err = suite.db.NewUpdate().Model(user).WherePK().Column("url_count").Exec(context.Background())
+	assert.NoError(suite.T(), err)
+
+	err = utils.IncrementURLCount(1, suite.db, ctx)
+	assert.NoError(suite.T(), err)
+
 	err = suite.db.NewSelect().Model(user).Where("id = ?", 1).Scan(context.Background())
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 1, user.URLCount)
 }
 
 func (suite *AppTestSuite) TestDecrementURLCount() {
-	ctx := gin.Context{}
-
-	err := utils.DecrementURLCount(1, suite.db, &ctx)
-	assert.NoError(suite.T(), err)
+	ctx, _ := gin.CreateTestContext(nil)
 
 	user := new(models.User)
+	err := suite.db.NewSelect().Model(user).Where("id = ?", 1).Scan(context.Background())
+	assert.NoError(suite.T(), err)
+	user.URLCount = 1
+	_, err = suite.db.NewUpdate().Model(user).WherePK().Column("url_count").Exec(context.Background())
+	assert.NoError(suite.T(), err)
+
+	err = utils.DecrementURLCount(1, suite.db, ctx)
+	assert.NoError(suite.T(), err)
+
 	err = suite.db.NewSelect().Model(user).Where("id = ?", 1).Scan(context.Background())
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 0, user.URLCount)
 }
-
