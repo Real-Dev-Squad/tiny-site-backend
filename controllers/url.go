@@ -31,7 +31,6 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	// Check if URL already exists
 	var existingOriginalURL models.Tinyurl
 	if err := db.NewSelect().Model(&existingOriginalURL).
 		Where("original_url = ?", body.OriginalUrl).
@@ -46,7 +45,6 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	// Validate custom short URL
 	if body.ShortUrl != "" {
 		if len(body.ShortUrl) < 5 {
 			ctx.JSON(http.StatusBadRequest, dtos.URLCreationResponse{
@@ -76,7 +74,6 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		}
 	}
 
-	// Count URLs for the user
 	count, err := db.NewSelect().
 		Model(&models.Tinyurl{}).
 		Where("user_id = ?", body.UserID).
@@ -99,7 +96,6 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 
 	body.CreatedAt = time.Now().UTC()
 
-	// Insert new URL
 	if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
 		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
 			Message: "Failed to create tiny URL",
@@ -107,7 +103,6 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	// Increment URL count
 	if err := utils.IncrementURLCount(body.UserID, db, ctx); err != nil {
 		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
 			Message: "Failed to increment URL count: " + err.Error(),
@@ -115,7 +110,6 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	// Fetch updated count
 	updatedCount, err := db.NewSelect().
 		Model(&models.Tinyurl{}).
 		Where("user_id = ?", body.UserID).
