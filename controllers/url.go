@@ -94,6 +94,15 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
+	body.CreatedAt = time.Now().UTC()
+
+	if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
+		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+			Message: "Failed to create tiny URL",
+		})
+		return
+	}
+
 	if err := utils.IncrementURLCount(body.UserID, db, ctx); err != nil {
 		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
 			Message: "Failed to increment URL count: " + err.Error(),
