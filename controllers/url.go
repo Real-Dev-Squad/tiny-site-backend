@@ -40,6 +40,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
 			Message:  "Shortened URL already exists",
 			ShortURL: existingOriginalURL.ShortUrl,
+			CreatedAt: existingOriginalURL.CreatedAt,
 		})
 		return
 	}
@@ -85,7 +86,6 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		})
 		return
 	}
-	body.CreatedAt = time.Now().UTC()
 
 	if count >= config.MaxUrlCount {
 		ctx.JSON(http.StatusForbidden, dtos.URLCreationResponse{
@@ -94,9 +94,39 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
+	body.CreatedAt = time.Now().UTC()
+
+	if _, err := db.NewInsert().Model(&body).Exec(ctx); err != nil {
+		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+			Message: "Failed to create tiny URL",
+		})
+		return
+	}
+
+	if err := utils.IncrementURLCount(body.UserID, db, ctx); err != nil {
+		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+			Message: "Failed to increment URL count: " + err.Error(),
+		})
+		return
+	}
+
+	updatedCount, err := db.NewSelect().
+		Model(&models.Tinyurl{}).
+		Where("user_id = ?", body.UserID).
+		Where("is_deleted = ?", false).
+		Count(ctx)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+			Message: "Failed to fetch updated URL count",
+		})
+		return
+	}
+
 	ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
-		Message:  "Tiny URL created successfully",
-		ShortURL: body.ShortUrl,
+		Message:   "Tiny URL created successfully",
+		ShortURL:  body.ShortUrl,
+		URLCount:  updatedCount,
 	})
 }
 
@@ -183,20 +213,53 @@ func GetAllURLs(ctx *gin.Context, db *bun.DB) {
 		URLs:    urlDetails,
 	})
 }
+
 func DeleteURL(ctx *gin.Context, db *bun.DB) {
-	id, _ := ctx.Params.Get("id")
-	_, err := db.NewUpdate().Model(&models.Tinyurl{}).Set("is_deleted=?", true).Set("deleted_at=?", time.Now().UTC()).Where("id = ?", id).Exec(ctx)
+    id, _ := ctx.Params.Get("id")
 
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, dtos.UserURLsResponse{
-			Message: "No URLs found",
-		})
-		return
-	}
+    var body struct {
+        UserID int64 `json:"user_id"`
+    }
+    if err := ctx.BindJSON(&body); err != nil {
+        ctx.JSON(http.StatusBadRequest, dtos.UserURLsResponse{
+            Message: "Invalid Request.",
+        })
+        return
+    }
 
-	ctx.JSON(http.StatusOK, dtos.UserURLsResponse{
-		Message: "Url deleted",
-	})
+    _, err := db.NewUpdate().Model(&models.Tinyurl{}).Set("is_deleted=?", true).Set("deleted_at=?", time.Now().UTC()).Where("id = ?", id).Exec(ctx)
+    if err != nil {
+        ctx.JSON(http.StatusNotFound, dtos.UserURLsResponse{
+            Message: "No URLs found",
+        })
+        return
+    }
+
+
+    if err := utils.DecrementURLCount(body.UserID, db, ctx); err != nil {
+        ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+            Message: "Failed to decrement URL count: " + err.Error(),
+        })
+        return
+    }
+
+	updatedCount, err := db.NewSelect().
+	Model(&models.Tinyurl{}).
+	Where("user_id = ?", body.UserID).
+	Where("is_deleted = ?", false).
+	Count(ctx)
+
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+            Message: "Failed to fetch updated URL count",
+        })
+        return
+    }
+
+    ctx.JSON(http.StatusOK, dtos.URLDeleteResponse{
+        Message:   "URL deleted",
+        URLCount:  updatedCount,
+    })
 }
 
 func GetURLDetails(ctx *gin.Context, db *bun.DB) {

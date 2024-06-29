@@ -1,10 +1,13 @@
 package tests
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 
 	controller "github.com/Real-Dev-Squad/tiny-site-backend/controllers"
+	"github.com/Real-Dev-Squad/tiny-site-backend/models"
+	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
@@ -91,4 +94,40 @@ func (suite *AppTestSuite) TestGetSelfUserNonExistingUser() {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(suite.T(), http.StatusNotFound, w.Code, "Expected status code to be 404 for non-existing user")
+}
+
+func (suite *AppTestSuite) TestIncrementURLCount() {
+	ctx, _ := gin.CreateTestContext(nil)
+
+	user := new(models.User)
+	err := suite.db.NewSelect().Model(user).Where("id = ?", 1).Scan(context.Background())
+	assert.NoError(suite.T(), err)
+	user.URLCount = 0
+	_, err = suite.db.NewUpdate().Model(user).WherePK().Column("url_count").Exec(context.Background())
+	assert.NoError(suite.T(), err)
+
+	err = utils.IncrementURLCount(1, suite.db, ctx)
+	assert.NoError(suite.T(), err)
+
+	err = suite.db.NewSelect().Model(user).Where("id = ?", 1).Scan(context.Background())
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), 1, user.URLCount)
+}
+
+func (suite *AppTestSuite) TestDecrementURLCount() {
+	ctx, _ := gin.CreateTestContext(nil)
+
+	user := new(models.User)
+	err := suite.db.NewSelect().Model(user).Where("id = ?", 1).Scan(context.Background())
+	assert.NoError(suite.T(), err)
+	user.URLCount = 1
+	_, err = suite.db.NewUpdate().Model(user).WherePK().Column("url_count").Exec(context.Background())
+	assert.NoError(suite.T(), err)
+
+	err = utils.DecrementURLCount(1, suite.db, ctx)
+	assert.NoError(suite.T(), err)
+
+	err = suite.db.NewSelect().Model(user).Where("id = ?", 1).Scan(context.Background())
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), 0, user.URLCount)
 }

@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
   is_deleted boolean DEFAULT false,
   is_onboarding BOOLEAN NOT NULL DEFAULT TRUE,
   created_at timestamp WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'UTC'),
-  updated_at timestamp WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'UTC')
+  updated_at timestamp WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'UTC'),
+  url_count bigint DEFAULT 0
 );
 
 -- Insert data into the users table

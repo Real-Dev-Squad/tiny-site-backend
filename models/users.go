@@ -18,4 +18,6 @@ type User struct {
 	CreatedAt    time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt    time.Time `bun:"updated_at,nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 	IsDeleted bool `bun:"is_deleted,default:false" json:"isDeleted"`
+	URLCount     int       `bun:"url_count,notnull,default:0" json:"urlCount"`
+	
 }
