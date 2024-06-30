@@ -1,7 +1,7 @@
 BEGIN;
 --bun:split
 
-ALTER TABLE users DROP COLUMN url_count;
+ALTER TABLE USERS DROP COLUMN url_count;
 --bun:split
 
 COMMIT;
