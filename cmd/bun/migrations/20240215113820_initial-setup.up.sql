@@ -12,7 +12,6 @@ CREATE TABLE users (
   updated_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC'),
   is_deleted boolean DEFAULT false,
   is_onboarding BOOLEAN NOT NULL DEFAULT TRUE
-  url_count int NOT NULL DEFAULT 0
 );
 
 --bun:split
