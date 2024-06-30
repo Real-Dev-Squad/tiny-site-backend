@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/Real-Dev-Squad/tiny-site-backend/cmd/bun/migrations"
+	"github.com/Real-Dev-Squad/tiny-site-backend/config"
 	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
 	"github.com/uptrace/bun/migrate"
 	"github.com/urfave/cli/v2"
@@ -15,16 +15,7 @@ import (
 
 func main() {
 
-	currentDir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
-	envFilePath := filepath.Join(currentDir, ".env")
-
-	utils.LoadEnv(envFilePath)
-
-	dsn := os.Getenv("DB_URL")
+	dsn := config.DbUrl
 
 	db, err := utils.SetupDBConnection(dsn)
 	if err != nil {

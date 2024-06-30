@@ -2,10 +2,9 @@ package utils
 
 import (
 	"errors"
-	"os"
-	"strconv"
 	"time"
 
+	"github.com/Real-Dev-Squad/tiny-site-backend/config"
 	"github.com/Real-Dev-Squad/tiny-site-backend/models"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -14,13 +13,10 @@ import (
  * GenerateToken generates a JWT token for the user
  */
 func GenerateToken(user *models.User) (string, error) {
-	issuer := os.Getenv("JWT_ISSUER")
-	key := []byte(os.Getenv("JWT_SECRET"))
+	issuer := config.JwtIssuer
+	key := []byte(config.JwtSecret)
 
-	tokenValidityInHours, err := strconv.ParseInt(os.Getenv("JWT_VALIDITY_IN_HOURS"), 10, 64)
-	if err != nil {
-		return "", err
-	}
+	tokenValidityInHours := config.JwtValidity
 
 	tokenExpiryTime := time.Now().Add(time.Duration(tokenValidityInHours) * time.Hour).UTC().Format(time.RFC3339)
 
@@ -47,7 +43,7 @@ func VerifyToken(tokenString string) (string, error) {
 			return nil, jwt.ErrSignatureInvalid
 		}
 
-		return []byte(os.Getenv("JWT_SECRET")), nil
+		return []byte(config.JwtSecret), nil
 	})
 
 	if c, ok := token.Claims.(jwt.MapClaims); !ok && !token.Valid {

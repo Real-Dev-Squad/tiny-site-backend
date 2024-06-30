@@ -20,6 +20,6 @@ type Tinyurl struct {
 	CreatedBy      string    `bun:"created_by,notnull" json:"createdBy"`
 	AccessCount    int64     `bun:"access_count,default:0" json:"accessCount"`
 	LastAccessedAt time.Time `bun:"last_accessed_at,nullzero" json:"lastAccessedAt"`
-	IsDeleted      bool      `bun:"is_deleted,null" json:"isDeleted"`
-	DeletedAt      time.Time `bun:"deleted_at,nullzero,null," json:"deletedAt"`
+	IsDeleted      bool      `bun:"is_deleted" json:"isDeleted"`
+	DeletedAt      time.Time `bun:"deleted_at" json:"deletedAt"`
 }

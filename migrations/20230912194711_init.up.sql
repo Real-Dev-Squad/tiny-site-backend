@@ -9,7 +9,8 @@ CREATE TABLE users (
   created_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC'),
   updated_at timestamp DEFAULT (NOW() AT TIME ZONE 'UTC'),
   is_deleted boolean DEFAULT false,
-  is_onboarding BOOLEAN NOT NULL DEFAULT TRUE
+  is_onboarding BOOLEAN NOT NULL DEFAULT TRUE,
+  url_count int NOT NULL DEFAULT 0
 );
 
 COMMIT;

@@ -1,8 +1,7 @@
 package routes
 
 import (
-	"os"
-
+	"github.com/Real-Dev-Squad/tiny-site-backend/config"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/uptrace/bun"
@@ -11,10 +10,9 @@ import (
 func SetupV1Routes(db *bun.DB) *gin.Engine {
 	router := gin.Default()
 
-	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
 
 	corsConfig := cors.Config{
-		AllowOrigins:     []string{allowedOrigins},
+		AllowOrigins:     []string{config.AllowedOrigin},
 		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
 		AllowCredentials: true,

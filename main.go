@@ -2,24 +2,27 @@ package main
 
 import (
 	"flag"
-	"log"
-	"os"
 
+	"github.com/Real-Dev-Squad/tiny-site-backend/config"
+	"github.com/Real-Dev-Squad/tiny-site-backend/logger"
 	"github.com/Real-Dev-Squad/tiny-site-backend/routes"
 	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
 )
 
 func main() {
-	utils.LoadEnv(".env")
-	dsn := os.Getenv("DB_URL")
+	dsn := config.DbUrl
 	db, err := utils.SetupDBConnection(dsn)
 	if err != nil {
-		log.Fatalf("failed to connect to the database: %v", err)
-		os.Exit(1)
+		logger.Fatal("failed to connect to the database:", err)
 	}
 
-	port := flag.String("port", os.Getenv("PORT"), "server address to listen on")
+
+	port := config.Port
+	if port == "" {
+		port = "8080"
+	}
+
 	flag.Parse()
 
-	routes.Listen("0.0.0.0:"+*port, db)
+	routes.Listen("0.0.0.0:"+port, db)
 }

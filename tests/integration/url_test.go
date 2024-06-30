@@ -108,7 +108,7 @@ func (suite *AppTestSuite) TestCreateTinyURLCustomShortURLExists() {
 
 	requestBody := map[string]interface{}{
 		"OriginalUrl": "https://rds.com",
-		"ShortUrl":    "short",
+		"ShortUrl":    "37fff",
 		"UserId":      1,
 	}
 	requestJSON, _ := json.Marshal(requestBody)
@@ -122,28 +122,42 @@ func (suite *AppTestSuite) TestCreateTinyURLCustomShortURLExists() {
 }
 
 func (suite *AppTestSuite) TestCreateTinyURLExistingOriginalURL() {
-	router := gin.Default()
-	router.POST("/v1/tinyurl", func(ctx *gin.Context) {
-		controller.CreateTinyURL(ctx, suite.db)
-	})
+    router := gin.Default()
+    router.POST("/v1/tinyurl", func(ctx *gin.Context) {
+        controller.CreateTinyURL(ctx, suite.db)
+    })
 
-	existingOriginalURL := "https://example.com"
+    existingOriginalURL := "https://www.example.com/1"
 
-	requestBody := map[string]interface{}{
-		"OriginalUrl": existingOriginalURL,
-		"UserId":      1,
-	}
-	requestJSON, _ := json.Marshal(requestBody)
-	req, _ := http.NewRequest("POST", "/v1/tinyurl", bytes.NewBuffer(requestJSON))
-	req.Header.Set("Content-Type", "application/json")
+    requestBody := map[string]interface{}{
+        "OriginalUrl": existingOriginalURL,
+        "UserId":      1,
+    }
+    requestJSON, _ := json.Marshal(requestBody)
+    req, _ := http.NewRequest("POST", "/v1/tinyurl", bytes.NewBuffer(requestJSON))
+    req.Header.Set("Content-Type", "application/json")
 
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+    w := httptest.NewRecorder()
+    router.ServeHTTP(w, req)
 
-	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for existing original URL")
+    assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for existing original URL")
 
-	expectedResponse := `{"message":"Shortened URL already exists", "shortUrl":"short","shortUrl":"short","createdAt":"0001-01-01T00:00:00Z"}`
-	assert.JSONEq(suite.T(), expectedResponse, w.Body.String(), "Response body does not match expected JSON")
+    var responseBody map[string]interface{}
+    err := json.Unmarshal(w.Body.Bytes(), &responseBody)
+    assert.NoError(suite.T(), err)
+
+    if responseBody["urlCount"] != nil {
+        responseBody["urlCount"] = int(responseBody["urlCount"].(float64))
+    }
+
+    expectedResponse := map[string]interface{}{
+        "message":   "Shortened URL already exists",
+        "shortUrl":  "37fff",
+        "urlCount":  0,
+        "createdAt": responseBody["createdAt"], 
+    }
+
+    assert.Equal(suite.T(), expectedResponse, responseBody, "Response body does not match expected JSON")
 }
 
 // TestRedirectShortURLSuccess tests the successful redirection of a short URL to the original URL.
