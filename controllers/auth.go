@@ -121,7 +121,7 @@ func GoogleCallback(ctx *gin.Context, db *bun.DB) {
         ctx.JSON(http.StatusInternalServerError, gin.H{"message": "error"})
         return
     }
-    ctx.SetCookie("token", token, config.TokenExpiration, "/", domain, true, true)
+    ctx.SetCookie("token", token, config.TokenValidity, "/", domain, true, true)
     ctx.Redirect(http.StatusFound, authRedirectUrl)
 }
 
