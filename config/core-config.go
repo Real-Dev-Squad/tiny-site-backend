@@ -96,8 +96,8 @@ func loadConfig() {
 	GoogleClientSecret = getEnvVar("GOOGLE_CLIENT_SECRET")
 	GoogleRedirectUrl = getEnvVar("GOOGLE_REDIRECT_URL")
 
-	MaxUrlCount = getEnvInt("Max_Url_Count")
-	TokenExpiration = getEnvInt("TokenExpiration")
+	MaxUrlCount = getEnvInt("USER_MAX_URL_COUNT")
+	TokenExpiration = getEnvInt("TOKEN_VALIDITY_IN_SECOND")
 
 	AllowedOrigin = getEnvVar("ALLOWED_ORIGINS")
 
