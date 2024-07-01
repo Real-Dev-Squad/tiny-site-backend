@@ -87,9 +87,9 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	if count >= config.MaxUrlCount {
+	if count >= config.UserMaxUrlCount {
 		ctx.JSON(http.StatusForbidden, dtos.URLCreationResponse{
-			Message: "You've reached the limit of " + strconv.Itoa(config.MaxUrlCount) + " for URLs. Delete one to add a new one !!",
+			Message: "You've reached the limit of " + strconv.Itoa(config.UserMaxUrlCount) + " for URLs. Delete one to add a new one !!",
 		})
 		return
 	}

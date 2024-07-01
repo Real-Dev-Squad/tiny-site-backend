@@ -12,7 +12,7 @@ import (
 
 var (
 	Env                 string
-	MaxUrlCount         int
+	UserMaxUrlCount         int
 	Domain              string
 	AuthRedirectUrl     string
 	DbUrl               string
@@ -20,7 +20,7 @@ var (
 	GoogleClientId      string
 	GoogleClientSecret  string
 	GoogleRedirectUrl   string
-	TokenExpiration     int
+	TokenValidity     int
 	JwtSecret           string
 	JwtValidity         int
 	JwtIssuer           string
@@ -96,8 +96,8 @@ func loadConfig() {
 	GoogleClientSecret = getEnvVar("GOOGLE_CLIENT_SECRET")
 	GoogleRedirectUrl = getEnvVar("GOOGLE_REDIRECT_URL")
 
-	MaxUrlCount = getEnvInt("USER_MAX_URL_COUNT")
-	TokenExpiration = getEnvInt("TOKEN_VALIDITY_IN_SECOND")
+	UserMaxUrlCount = getEnvInt("USER_MAX_URL_COUNT")
+	TokenValidity = getEnvInt("TOKEN_VALIDITY_IN_SECOND")
 
 	AllowedOrigin = getEnvVar("ALLOWED_ORIGINS")
 
