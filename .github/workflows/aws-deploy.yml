@@ -67,4 +67,6 @@ jobs:
               -e GOOGLE_CLIENT_SECRET=${{secrets.GOOGLE_CLIENT_SECRET}} \
               -e GOOGLE_REDIRECT_URL=${{vars.GOOGLE_REDIRECT_URL}} \
               -e ALLOWED_ORIGINS=${{vars.ALLOWED_ORIGINS}} \
+              -e TOKEN_VALIDITY_IN_SECOND=${{vars.TOKEN_VALIDITY_IN_SECOND}} \
+              -e USER_MAX_URL_COUNT=${{vars.USER_MAX_URL_COUNT}} \
               ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
