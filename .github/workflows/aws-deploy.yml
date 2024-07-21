@@ -51,6 +51,7 @@ jobs:
             docker run -d -p ${{vars.PORT}}:${{vars.PORT}} \
               --name ${{ github.event.repository.name }}-${{vars.ENV}} \
               --network=${{vars.DOCKER_NETWORK}} \
+              -e ENV=${{vars.ENV}} \
               -e GIN_MODE=${{vars.GIN_MODE}} \
               -e JWT_SECRET=${{secrets.JWT_SECRET}} \
               -e JWT_VALIDITY_IN_HOURS=${{vars.JWT_VALIDITY_IN_HOURS}} \
@@ -66,4 +67,6 @@ jobs:
               -e GOOGLE_CLIENT_SECRET=${{secrets.GOOGLE_CLIENT_SECRET}} \
               -e GOOGLE_REDIRECT_URL=${{vars.GOOGLE_REDIRECT_URL}} \
               -e ALLOWED_ORIGINS=${{vars.ALLOWED_ORIGINS}} \
+              -e TOKEN_VALIDITY_IN_SECONDS=${{vars.TOKEN_VALIDITY_IN_SECONDS}} \
+              -e USER_MAX_URL_COUNT=${{vars.USER_MAX_URL_COUNT}} \
               ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
