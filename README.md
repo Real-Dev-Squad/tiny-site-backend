@@ -95,7 +95,7 @@ pgAdmin is a popular database management tool for PostgreSQL. It is recommended 
     air
     ```
 
-    The backend server should now be running at `http://localhost:8000`.
+    The backend server should now be running at `http://localhost:8000s`.
 
 8. Access the Tiny Site Backend API via a web browser or API client, and start developing your application.
 
