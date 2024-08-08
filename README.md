@@ -1,104 +1,108 @@
-# Tiny Site Backend Setup Guide
+# Tiny Site Backend Setup Guide: A Beginner-Friendly Approach
 
-This README provides step-by-step instructions for setting up the Tiny Site Backend on your local development environment. The Tiny Site Backend is built using the Go programming language, PostgreSQL for the database, and Google authentication for authentication. Before you begin, ensure that you have the following prerequisites installed on your system:
+Welcome to the Tiny Site Backend setup guide! This guide will walk you through setting up the project on your local machine, even if you're new to web development. Let's break it down into simple steps.
 
-1. Go 1.21 or higher
-2. PostgreSQL 15 or higher
-3. pgAdmin (optional but recommended for database management)
+## What You'll Need
 
-## Prerequisites
+Before we start, make sure you have these tools installed:
 
-### Go 1.21
+1. Go (version 1.21 or newer) - This is the programming language we use.
+2. PostgreSQL (version 15 or newer) - Our database system.
+3. pgAdmin (optional) - A helpful tool for managing your database.
 
-Make sure you have Go version 1.21 or higher installed on your system. You can download and install Go from the official website: [Go Downloads](https://golang.org/dl/)
+Don't have these? No worries! Here's where to get them:
+- Go: https://golang.org/dl/
+- PostgreSQL: https://www.postgresql.org/download/
+- pgAdmin: https://www.pgadmin.org/download/
 
-### PostgreSQL
+## Setting Up Your Project
 
-You will need PostgreSQL as the database for the Tiny Site Backend. You can download and install PostgreSQL from the official website: [PostgreSQL Downloads](https://www.postgresql.org/download/)
-
-### pgAdmin (Optional)
-
-pgAdmin is a popular database management tool for PostgreSQL. It is recommended to install pgAdmin for easier database management. You can download and install pgAdmin from the official website: [pgAdmin Downloads](https://www.pgadmin.org/download/)
-
-## Setup Instructions
-
-1. Clone the Tiny Site Backend repository from GitHub:
-
-   ```bash
-   git clone https://github.com/Real-Dev-Squad/tiny-site-backend.git
+1. **Get the Code**
+   Open your terminal and run:
    ```
-
-2. Navigate to the project directory:
-
-   ```bash
+   git clone https://github.com/Real-Dev-Squad/tiny-site-backend.git
    cd tiny-site-backend
    ```
 
-3. Create a `.env` file for your local development environment. You can use the sample `.env` file provided in the `environments` directory as a template. Copy the `dev.env` file to `.env`:
+2. **Set Up Your Environment**
+   Create a file named `.env` in the project folder. This file will hold important settings. Here's a template:
 
-   ```bash
-   cp environments/dev.env .env
+   ```
+   JWT_SECRET=<your-secret-key> e.g. my-secret-key
+   JWT_VALIDITY_IN_HOURS=<validity-in-hours> e.g. 72
+   JWT_ISSUER=<issuer> e.g. tiny-site-backend
+
+   PORT=<port> e.g. 8000
+   DOMAIN=<domain> e.g. localhost
+   AUTH_REDIRECT_URL=<auth-redirect-url> e.g. http://localhost:3000
+   ALLOWED_ORIGINS=<allowed-origins> e.g. http://localhost:3000
+
+   DB_URL=postgresql://<username>:<password>@<host>:<port>/<database_name>?sslmode=disable
+   e.g. postgresql://postgres:postgres@localhost:5432/tiny-site?sslmode=disable
+
+   TEST_DB_URL=postgresql://<username>:<password>@<host>:<port>/<test_database_name>?sslmode=disable
+   e.g. postgresql://postgres:postgres@localhost:5432/test-tiny-site?sslmode=disable
+
+   DB_MAX_OPEN_CONNECTIONS=<max-open-connections> e.g. 10
+
+   GOOGLE_CLIENT_ID=<google-client-id>
+   GOOGLE_CLIENT_SECRET=<google-client-secret>
+   GOOGLE_REDIRECT_URL="http://<domain>:<port>/v1/auth/google/callback"
+   e.g. http://localhost:8000/v1/auth/google/callback
    ```
 
-   Edit the `.env` file and configure the environment variables according to your local setup. Make sure to set the database connection details and Google OAuth credentials.
+   Replace the placeholder values with your actual settings.
 
-4. **Setting Up Google OAuth**
+3. **Google OAuth Setup**
+   To allow Google sign-in:
+   - Go to https://console.developers.google.com/
+   - Create a new project
+   - Set up OAuth credentials for a web application
+   - Add `http://localhost:8000` as an authorized JavaScript origin
+   - Add `http://localhost:8000/auth/google/callback` as a redirect URI
+   - Copy the provided client ID and secret to your `.env` file
 
-   - Go to the [Google Developers Console](https://console.developers.google.com/).
+4. **Set Up Your Database**
+   - Open pgAdmin
+   - Create a new database called `tiny-site`
+   - If you choose a different name, update the `DB_URL` in your `.env` file
 
-   - Click on "Select a Project" in the top navigation and create a new project if you don't have one.
+5. **Prepare Your Database**
+   Run this command to set up your database tables:
+   ```
+   migrate -path ./migrations -database "postgresql://username:password@host:port/database_name?sslmode=disable" up
+   ```
+   Replace `username`, `password`, `host`, `port`, and `database_name` with your actual database details.
 
-   - In the left sidebar, click on "APIs & Services" and then "Credentials."
-
-   - Click on "Create Credentials" and select "OAuth client ID."
-
-   - Choose "Web application" as the application type.
-
-   - In the "Authorized JavaScript origins" field, add `http://localhost:8000` since this is your local development environment.
-
-   - In the "Authorized redirect URIs" field, add the URI where Google should redirect after authentication. For local development, use `http://localhost:8000/auth/google/callback`.
-
-   - Click the "Create" button.
-
-   - You will be provided with a client ID and client secret. Add these values to your `.env` file that you created earlier:
-
-     ```
-     GOOGLE_CLIENT_ID=your-client-id
-     GOOGLE_CLIENT_SECRET=your-client-secret
-     ```
-
-   - Save the changes to your `.env` file.
-
-5. Create the PostgreSQL database for the project. You can use pgAdmin or command-line tools to create the database. Update the `.env` file with the database connection details.
-
-    ```
-    DB_URL=postgres://username:password@host:port/database_name
-    TEST_DB_URL=postgres://username:password@host:port/test_database_name
-    ```
-
-6. Install the Go project dependencies:
-
-   ```bash
+6. **Install Project Dependencies**
+   Run:
+   ```
    go mod download
    ```
 
-7. Build and run the Tiny Site Backend:
+7. **Start Your Server**
+   You have two options:
 
-   ```bash
-   go run main.go
-   ```
+   a. Basic start:
+      ```
+      go run main.go
+      ```
 
-- Use Air for hot reloading
+   b. For automatic reloading during development:
+      ```
+      go get -u github.com/cosmtrek/air
+      air
+      ```
 
-    ```bash
-    go get -u github.com/cosmtrek/air
-    air
-    ```
+Great job! Your server should now be running at `http://localhost:8000`.
 
-    The backend server should now be running at `http://localhost:8000`.
+## Next Steps
 
-8. Access the Tiny Site Backend API via a web browser or API client, and start developing your application.
+- Explore the API endpoints in your browser or with a tool like Postman.
+- You can also use [Tiny Site Frontend]([https://](https://github.com/Real-Dev-Squad/tiny-site-frontend)) to try out the full application.
+- Happy coding!
 
-## Usage
 
-You can access the Tiny Site Backend API at `http://localhost:8000` once the server is running. Refer to the project's documentation or API endpoints for more information on how to interact with the backend.
+## Need Help?
+
+If you run into any issues, feel free to ask for help in the #tiny-site channel on our [Discord server](https://discord.com/channels/673083527624916993/785579160264769586). We're here to help you succeed! 
