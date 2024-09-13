@@ -11,37 +11,39 @@ import (
 )
 
 var (
-	Env                 string
-	UserMaxUrlCount         int
-	Domain              string
-	AuthRedirectUrl     string
-	DbUrl               string
+	Env                  string
+	UserMaxUrlCount      int
+	Domain               string
+	AuthRedirectUrl      string
+	DbUrl                string
 	DbMaxOpenConnections int
-	GoogleClientId      string
-	GoogleClientSecret  string
-	GoogleRedirectUrl   string
-	TokenValidity     int
-	JwtSecret           string
-	JwtValidity         int
-	JwtIssuer           string
-	AllowedOrigin		string
-	Port                string
+	GoogleClientId       string
+	GoogleClientSecret   string
+	GoogleRedirectUrl    string
+	TokenValidity        int
+	JwtSecret            string
+	JwtValidity          int
+	JwtIssuer            string
+	AllowedOrigin        string
+	Port                 string
 )
 
-func findAndLoadEnv(envFile string) {
+func findAndLoadEnv(envFile string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		logger.Fatal("Could not get current working directory:", err)
 	}
 
+	logger.Info("Starting search for .env file from:", cwd)
+
 	for {
 		envPath := filepath.Join(cwd, envFile)
 		if _, err := os.Stat(envPath); err == nil {
 			if err := godotenv.Load(envPath); err != nil {
-				logger.Fatal("Error loading .env file:", err)
+				logger.Error("Error loading .env file:", err)
 			}
 			logger.Info("Loaded environment variables from:", envPath)
-			return
+			return nil
 		}
 
 		parent := filepath.Dir(cwd)
@@ -51,7 +53,7 @@ func findAndLoadEnv(envFile string) {
 		cwd = parent
 	}
 
-	logger.Fatal("Could not find .env file at:", envFile)
+	return fmt.Errorf("could not find .env file: %s", envFile)
 }
 
 func loadEnv() {
@@ -65,7 +67,10 @@ func loadEnv() {
 		envFile = "environments/test.env"
 	}
 
-	findAndLoadEnv(envFile)
+	if err := findAndLoadEnv(envFile); err != nil {
+		logger.Error("Failed to load .env file:", err)
+		return
+	}
 }
 
 func init() {
@@ -109,6 +114,7 @@ func getEnvVar(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
 		logger.Fatal(fmt.Sprintf("Environment variable %s not set", key))
+		os.Exit(1)
 	}
 	return value
 }
