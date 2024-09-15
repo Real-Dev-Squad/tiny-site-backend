@@ -7,57 +7,65 @@
 ################################################################################
 # Create a stage for building the application.
 ARG GO_VERSION=1.21
-FROM golang:${GO_VERSION}-alpine AS build
+ARG PLATFORM_VERSION=linux/arm64
+FROM --platform=${PLATFORM_VERSION} golang:${GO_VERSION} AS build
 WORKDIR /src
-
-# Install build dependencies
-RUN apk add --no-cache git
-
-# Copy only the go.mod and go.sum files first
-COPY go.mod go.sum ./
+COPY . .
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /go/pkg/mod/ to speed up subsequent builds.
+# Leverage bind mounts to go.sum and go.mod to avoid having to copy them into
+# the container.
 RUN --mount=type=cache,target=/go/pkg/mod/ \
+    --mount=type=bind,source=go.sum,target=go.sum \
+    --mount=type=bind,source=go.mod,target=go.mod \
     go mod download -x
 
-# Copy the rest of the source code
-COPY . .
-
-# Build the application for ARM64 architecture.
+# Build the application.
 # Leverage a cache mount to /go/pkg/mod/ to speed up subsequent builds.
+# Leverage a bind mount to the current directory to avoid having to copy the
+# source code into the container.
 RUN --mount=type=cache,target=/go/pkg/mod/ \
-    GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o /bin/server .
+    --mount=type=bind,target=. \
+    CGO_ENABLED=0 go build -o /bin/server .
 
 RUN --mount=type=cache,target=/go/pkg/mod/ \
-    GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o /bin/bun ./cmd/bun/main.go
+    --mount=type=bind,target=. \
+    CGO_ENABLED=0 go build -o /bin/bun ./cmd/bun/main.go
 
 ################################################################################
 # Create a new stage for running the application that contains the minimal
-# runtime dependencies for the application.
-FROM --platform=linux/arm64 alpine:3 AS final
+# runtime dependencies for the application. This often uses a different base
+# image from the build stage where the necessary files are copied from the build
+# stage.
+#
+# The example below uses the alpine image as the foundation for running the app.
+# By specifying the "latest" tag, it will also use whatever happens to be the
+# most recent version of that image when you build your Dockerfile. If
+# reproducability is important, consider using a versioned tag
+# (e.g., alpine:3.17.2) or SHA (e.g., alpine@sha256:c41ab5c992deb4fe7e5da09f67a8804a46bd0592bfdf0b1847dde0e0889d2bff).
+FROM alpine:3 AS final
 
 # Install any runtime dependencies that are needed to run your application.
 # Leverage a cache mount to /var/cache/apk/ to speed up subsequent builds.
 RUN --mount=type=cache,target=/var/cache/apk \
-    apk --update --no-cache add \
+    apk --update add \
         ca-certificates \
         tzdata \
         && \
         update-ca-certificates
 
-# Copy the executables from the "build" stage.
+# Copy the executable from the "build" stage.
 COPY --from=build /bin/server /bin/
 COPY --from=build /bin/bun /bin/bun/
 COPY entrypoint.sh /bin/entrypoint.sh
-
-# Copy only necessary source files
-COPY --from=build /src/go.mod /src/go.sum /src/
+COPY . /src
 
 # Make the entrypoint script executable
 RUN chmod +x /bin/entrypoint.sh
 
 # Create a non-privileged user that the app will run under.
+# See https://docs.docker.com/go/dockerfile-user-best-practices/
 ARG UID=10001
 RUN adduser \
     --disabled-password \
