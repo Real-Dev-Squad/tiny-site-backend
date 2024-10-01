@@ -15,52 +15,40 @@ import (
 func GenerateToken(user *models.User) (string, error) {
 	issuer := config.JwtIssuer
 	key := []byte(config.JwtSecret)
-
 	tokenValidityInHours := config.JwtValidity
-
-	tokenExpiryTime := time.Now().Add(time.Duration(tokenValidityInHours) * time.Hour).UTC().Format(time.RFC3339)
-
-	t := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
-		"iss":   issuer,
-		"exp":   tokenExpiryTime,
-		"email": user.Email,
-	})
-
-	token, error := t.SignedString(key)
-
-	return token, error
+	tokenExpiryTime := time.Now().Add(time.Duration(tokenValidityInHours) * time.Hour).UTC().Unix()
+	claims := jwt.MapClaims{
+		"iss":    issuer,
+		"exp":    tokenExpiryTime,
+		"email":  user.Email,
+		"userID": user.ID,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+	tokenString, err := token.SignedString(key)
+	return tokenString, err
 }
 
 /*
  * VerifyToken verifies the token and returns the email of the user
  */
-func VerifyToken(tokenString string) (string, error) {
-	var claims jwt.MapClaims = nil
-
+func VerifyToken(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-
-		if token.Method.Alg() != jwt.SigningMethodHS512.Alg() {
-			return nil, jwt.ErrSignatureInvalid
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
 		}
-
 		return []byte(config.JwtSecret), nil
 	})
 
-	if c, ok := token.Claims.(jwt.MapClaims); !ok && !token.Valid {
-		return "", err
-	} else {
-		claims = c
-	}
-
-	expiryTime, err := time.Parse(time.RFC3339, claims["exp"].(string))
-
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	if time.Now().UTC().After(expiryTime) {
-		return "", errors.New("token has expired")
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if float64(time.Now().Unix()) > claims["exp"].(float64) {
+			return nil, errors.New("token has expired")
+		}
+		return claims, nil
 	}
 
-	return claims["email"].(string), nil
+	return nil, errors.New("invalid token")
 }
