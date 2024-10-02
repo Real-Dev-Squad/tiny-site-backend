@@ -22,6 +22,7 @@ func GenerateToken(user *models.User) (string, error) {
 		"exp":    tokenExpiryTime,
 		"email":  user.Email,
 		"userID": user.ID,
+		"iat": time.Now().Unix(), 
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	tokenString, err := token.SignedString(key)
