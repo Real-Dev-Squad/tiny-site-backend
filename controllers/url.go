@@ -2,7 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -33,22 +32,13 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	userIDFloat, exists := ctx.Get("userID")
+	userID , exists := ctx.Get("userID")
 	if !exists {
 		ctx.JSON(http.StatusUnauthorized, dtos.URLCreationResponse{
 			Message: "User not authenticated",
 		})
 		return
 	}
-
-	userIDFloat64, ok := userIDFloat.(float64)
-	if !ok {
-		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
-			Message: "Invalid user ID type",
-		})
-		return
-	}
-	userID := int64(math.Round(userIDFloat64))
 
 	var existingOriginalURL models.Tinyurl
 	if err := db.NewSelect().Model(&existingOriginalURL).
@@ -116,7 +106,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	newTinyURL := models.Tinyurl{
 		OriginalUrl: body.OriginalUrl,
 		ShortUrl:    body.ShortUrl,
-		UserID:      userID,
+		UserID:      userID.(int64),
 		CreatedAt:   time.Now().UTC(),
 	}
 
@@ -127,7 +117,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	if err := utils.IncrementURLCount(userID, db, ctx); err != nil {
+	if err := utils.IncrementURLCount(userID.(int64), db, ctx); err != nil {
 		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
 			Message: "Failed to increment URL count: " + err.Error(),
 		})
