@@ -239,7 +239,7 @@ func DeleteURL(ctx *gin.Context, db *bun.DB) {
         return
     }
 
-	userId, exists := ctx.Get("userID")  // Correct key here
+	userId, exists := ctx.Get("userID")
 	if !exists {
 		ctx.JSON(http.StatusUnauthorized, gin.H{
 			"message": "Unauthorized",
