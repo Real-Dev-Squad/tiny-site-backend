@@ -9,47 +9,51 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-/*
- * GenerateToken generates a JWT token for the user
- */
+var (
+	ErrUnexpectedSigningMethod = errors.New("unexpected signing method")
+	ErrInvalidToken            = errors.New("invalid token")
+	ErrTokenExpired            = errors.New("token has expired")
+)
+
 func GenerateToken(user *models.User) (string, error) {
-	issuer := config.JwtIssuer
 	key := []byte(config.JwtSecret)
-	tokenValidityInHours := config.JwtValidity
-	tokenExpiryTime := time.Now().Add(time.Duration(tokenValidityInHours) * time.Hour).UTC().Unix()
+	expiryTime := time.Now().Add(time.Duration(config.JwtValidity) * time.Hour).UTC()
+
 	claims := jwt.MapClaims{
-		"iss":    issuer,
-		"exp":    tokenExpiryTime,
+		"iss":    config.JwtIssuer,
+		"exp":    expiryTime.Unix(),
+		"iat":    time.Now().UTC().Unix(),
 		"email":  user.Email,
 		"userID": user.ID,
-		"iat": time.Now().Unix(), 
 	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-	tokenString, err := token.SignedString(key)
-	return tokenString, err
+	return token.SignedString(key)
 }
 
-/*
- * VerifyToken verifies the token and returns the email of the user
- */
 func VerifyToken(tokenString string) (jwt.MapClaims, error) {
+	key := []byte(config.JwtSecret)
+
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
+			return nil, ErrUnexpectedSigningMethod
 		}
-		return []byte(config.JwtSecret), nil
+		return key, nil
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		if float64(time.Now().Unix()) > claims["exp"].(float64) {
-			return nil, errors.New("token has expired")
-		}
-		return claims, nil
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, ErrInvalidToken
 	}
 
-	return nil, errors.New("invalid token")
+	expiryTime := time.Unix(int64(claims["exp"].(float64)), 0)
+	if time.Now().UTC().After(expiryTime) {
+		return nil, ErrTokenExpired
+	}
+
+	return claims, nil
 }

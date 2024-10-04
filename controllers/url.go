@@ -239,27 +239,19 @@ func DeleteURL(ctx *gin.Context, db *bun.DB) {
         return
     }
 
-    userId, exists := ctx.Get("userId")
-    if !exists {
-        ctx.JSON(http.StatusUnauthorized, gin.H{
-            "message": "Unauthorized",
-        })
-        return
-    }
-
-    userIdInt, ok := userId.(int64)
-    if !ok {
-        ctx.JSON(http.StatusInternalServerError, gin.H{
-            "message": "User ID type assertion failed",
-        })
-        return
-    }
+	userId, exists := ctx.Get("userID")  // Correct key here
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Unauthorized",
+		})
+		return
+	}
 
     var url models.Tinyurl
     err = db.NewSelect().
         Model(&url).
         Where("id = ?", urlId).
-        Where("user_id = ?", userIdInt).
+        Where("user_id = ?", userId).
         Where("is_deleted = ?", false).
         Scan(ctx)
     if err != nil {
@@ -275,7 +267,7 @@ func DeleteURL(ctx *gin.Context, db *bun.DB) {
         Set("is_deleted = ?", true).
         Set("deleted_at = ?", time.Now().UTC()).
         Where("id = ?", urlId).
-        Where("user_id = ?", userIdInt).
+        Where("user_id = ?", userId).
         Exec(ctx)
     if err != nil {
         ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -284,7 +276,7 @@ func DeleteURL(ctx *gin.Context, db *bun.DB) {
         return
     }
 
-    err = utils.DecrementURLCount(userIdInt, db, ctx)
+    err = utils.DecrementURLCount(userId.(int64), db, ctx)
     if err != nil {
         ctx.JSON(http.StatusInternalServerError, gin.H{
             "message": "Failed to decrement URL count: " + err.Error(),
@@ -294,7 +286,7 @@ func DeleteURL(ctx *gin.Context, db *bun.DB) {
 
     updatedCount, err := db.NewSelect().
         Model(&models.Tinyurl{}).
-        Where("user_id = ?", userIdInt).
+        Where("user_id = ?", userId).
         Where("is_deleted = ?", false).
         Count(ctx)
     if err != nil {

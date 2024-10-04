@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
 	"github.com/gin-gonic/gin"
@@ -27,16 +26,16 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		userIDStr := claims["userID"].(string)
-		userID, err := strconv.ParseInt(userIDStr, 10, 64)
-		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid UserID"})
-			ctx.Abort()
-			return
-		}
+		userID, ok := claims["userID"].(float64)
+
+        if !ok {
+            ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid UserID format"})
+            ctx.Abort()
+            return
+        }
 
 		ctx.Set("user", claims["email"])
-		ctx.Set("userID", userID)
+		ctx.Set("userID", int64(userID))
 		ctx.Next()
 	}
 }
