@@ -42,8 +42,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 	var existingOriginalURL models.Tinyurl
 	if err := db.NewSelect().Model(&existingOriginalURL).
 		Where("original_url = ?", body.OriginalUrl).
-		Where("user_id = ?", userID).
-		Where("is_deleted = ?", false).
+		Where("user_id = ? AND is_deleted = ?", userID, false).
 		Scan(ctx); err == nil {
 		ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
 			Message:  "Shortened URL already exists",
@@ -84,8 +83,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 
 	count, err := db.NewSelect().
 		Model(&models.Tinyurl{}).
-		Where("user_id = ?", userID).
-		Where("is_deleted = ?", false).
+		Where("user_id = ? AND is_deleted = ?", userID, false).
 		Count(ctx)
 
 	if err != nil {
@@ -125,8 +123,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 
 	updatedCount, err := db.NewSelect().
 		Model(&models.Tinyurl{}).
-		Where("user_id = ?", userID).
-		Where("is_deleted = ?", false).
+		Where("user_id = ? AND is_deleted = ?", userID, false).
 		Count(ctx)
 
 	if err != nil {
