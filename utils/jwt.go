@@ -9,58 +9,53 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-/*
- * GenerateToken generates a JWT token for the user
- */
+var (
+	ErrUnexpectedSigningMethod = errors.New("unexpected signing method")
+	ErrInvalidToken            = errors.New("invalid token")
+	ErrTokenExpired            = errors.New("token has expired")
+)
+
 func GenerateToken(user *models.User) (string, error) {
-	issuer := config.JwtIssuer
 	key := []byte(config.JwtSecret)
+	expiryTime := time.Now().Add(time.Duration(config.JwtValidity) * time.Hour).UTC()
 
-	tokenValidityInHours := config.JwtValidity
+	claims := jwt.MapClaims{
+		"iss":    config.JwtIssuer,
+		"exp":    expiryTime.Unix(),
+		"iat":    time.Now().UTC().Unix(),
+		"email":  user.Email,
+		"userID": user.ID,
+	}
 
-	tokenExpiryTime := time.Now().Add(time.Duration(tokenValidityInHours) * time.Hour).UTC().Format(time.RFC3339)
-
-	t := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
-		"iss":   issuer,
-		"exp":   tokenExpiryTime,
-		"email": user.Email,
-	})
-
-	token, error := t.SignedString(key)
-
-	return token, error
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+	return token.SignedString(key)
 }
 
-/*
- * VerifyToken verifies the token and returns the email of the user
- */
-func VerifyToken(tokenString string) (string, error) {
-	var claims jwt.MapClaims = nil
+func VerifyToken(tokenString string) (jwt.MapClaims, error) {
+	key := []byte(config.JwtSecret)
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	// Parsing the token
 
-		if token.Method.Alg() != jwt.SigningMethodHS512.Alg() {
-			return nil, jwt.ErrSignatureInvalid
+	token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+
+		//validatint the algo
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, ErrUnexpectedSigningMethod
 		}
-
-		return []byte(config.JwtSecret), nil
+		return key, nil
 	})
 
-	if c, ok := token.Claims.(jwt.MapClaims); !ok && !token.Valid {
-		return "", err
-	} else {
-		claims = c
-	}
-
-	expiryTime, err := time.Parse(time.RFC3339, claims["exp"].(string))
-
 	if err != nil {
-		return "", err
+		if errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet) {
+			return nil, ErrTokenExpired
+		}
+		return nil, err
 	}
 
-	if time.Now().UTC().After(expiryTime) {
-		return "", errors.New("token has expired")
+	// Validating  the token and casting the claims :P
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
 	}
 
-	return claims["email"].(string), nil
+	return nil, ErrInvalidToken
 }

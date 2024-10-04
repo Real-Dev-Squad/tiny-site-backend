@@ -15,6 +15,12 @@ import (
 func (suite *AppTestSuite) TestCreateTinyURLSuccess() {
 	// Setup the router and route for creating a tiny URL
 	router := gin.Default()
+
+	router.Use(func(ctx *gin.Context) {
+		ctx.Set("userID", int64(1))
+		ctx.Next()
+	})
+
 	router.POST("/v1/tinyurl", func(ctx *gin.Context) {
 		controller.CreateTinyURL(ctx, suite.db)
 	})
@@ -81,6 +87,12 @@ func (suite *AppTestSuite) TestCreateTinyURLEmptyOriginalURL() {
 // TestCreateTinyURLCustomShortURL tests the creation of a tiny URL with a custom short URL and expects a successful response.
 func (suite *AppTestSuite) TestCreateTinyURLCustomShortURL() {
 	router := gin.Default()
+
+	router.Use(func(ctx *gin.Context) {
+		ctx.Set("userID", int64(1))
+		ctx.Next()
+	})
+
 	router.POST("/v1/tinyurl", func(ctx *gin.Context) {
 		controller.CreateTinyURL(ctx, suite.db)
 	})
@@ -88,7 +100,6 @@ func (suite *AppTestSuite) TestCreateTinyURLCustomShortURL() {
 	requestBody := map[string]interface{}{
 		"OriginalUrl": "https://example.com",
 		"ShortUrl":    "short",
-		"UserId":      1,
 	}
 	requestJSON, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("POST", "/v1/tinyurl", bytes.NewBuffer(requestJSON))
@@ -102,6 +113,12 @@ func (suite *AppTestSuite) TestCreateTinyURLCustomShortURL() {
 
 func (suite *AppTestSuite) TestCreateTinyURLCustomShortURLExists() {
 	router := gin.Default()
+
+	router.Use(func(ctx *gin.Context) {
+		ctx.Set("userID", int64(1))
+		ctx.Next()
+	})
+
 	router.POST("/v1/tinyurl", func(ctx *gin.Context) {
 		controller.CreateTinyURL(ctx, suite.db)
 	})
@@ -109,7 +126,6 @@ func (suite *AppTestSuite) TestCreateTinyURLCustomShortURLExists() {
 	requestBody := map[string]interface{}{
 		"OriginalUrl": "https://rds.com",
 		"ShortUrl":    "37fff",
-		"UserId":      1,
 	}
 	requestJSON, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("POST", "/v1/tinyurl", bytes.NewBuffer(requestJSON))
@@ -123,6 +139,12 @@ func (suite *AppTestSuite) TestCreateTinyURLCustomShortURLExists() {
 
 func (suite *AppTestSuite) TestCreateTinyURLExistingOriginalURL() {
     router := gin.Default()
+
+	router.Use(func(ctx *gin.Context) {
+		ctx.Set("userID", int64(1))
+		ctx.Next()
+	})
+
     router.POST("/v1/tinyurl", func(ctx *gin.Context) {
         controller.CreateTinyURL(ctx, suite.db)
     })
@@ -131,7 +153,6 @@ func (suite *AppTestSuite) TestCreateTinyURLExistingOriginalURL() {
 
     requestBody := map[string]interface{}{
         "OriginalUrl": existingOriginalURL,
-        "UserId":      1,
     }
     requestJSON, _ := json.Marshal(requestBody)
     req, _ := http.NewRequest("POST", "/v1/tinyurl", bytes.NewBuffer(requestJSON))

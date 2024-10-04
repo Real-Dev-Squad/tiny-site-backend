@@ -18,7 +18,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		token := tokenCookie.Value
 
-		email, err := utils.VerifyToken(token)
+		claims, err := utils.VerifyToken(token)
 
 		if err != nil {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
@@ -26,7 +26,16 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set("user", email)
+		userID, ok := claims["userID"].(float64)
+
+        if !ok {
+            ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid UserID format"})
+            ctx.Abort()
+            return
+        }
+
+		ctx.Set("user", claims["email"])
+		ctx.Set("userID", int64(userID))
 		ctx.Next()
 	}
 }
