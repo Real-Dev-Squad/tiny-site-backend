@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -230,68 +229,46 @@ func GetAllURLs(ctx *gin.Context, db *bun.DB) {
 
 func DeleteURL(ctx *gin.Context, db *bun.DB) {
     id, _ := ctx.Params.Get("id")
-    
-    urlId, err := strconv.Atoi(id)
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, gin.H{
-            "message": "Invalid URL ID",
+
+    userID, exists := ctx.Get("userID")
+    if !exists {
+        ctx.JSON(http.StatusUnauthorized, dtos.UserURLsResponse{
+            Message: "User not authenticated",
         })
         return
     }
 
-	userId, exists := ctx.Get("userID")
-	if !exists {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"message": "Unauthorized",
-		})
-		return
-	}
-
-    var url models.Tinyurl
-    err = db.NewSelect().
-        Model(&url).
-        Where("id = ?", urlId).
-        Where("user_id = ?", userId).
-        Where("is_deleted = ?", false).
-        Scan(ctx)
-    if err != nil {
-        fmt.Println("Error during URL query:", err)
-        ctx.JSON(http.StatusNotFound, gin.H{
-            "message": "URL not found or already deleted",
-        })
-        return
-    }
-
-    _, err = db.NewUpdate().
-        Model(&url).
-        Set("is_deleted = ?", true).
-        Set("deleted_at = ?", time.Now().UTC()).
-        Where("id = ?", urlId).
-        Where("user_id = ?", userId).
+    _, err := db.NewUpdate().
+        Model(&models.Tinyurl{}).
+        Set("is_deleted=?", true).
+        Set("deleted_at=?", time.Now().UTC()).
+        Where("id = ?", id).
+        Where("user_id = ?", userID).
         Exec(ctx)
+
     if err != nil {
-        ctx.JSON(http.StatusInternalServerError, gin.H{
-            "message": "Failed to delete URL",
+        ctx.JSON(http.StatusNotFound, dtos.UserURLsResponse{
+            Message: "No URLs found",
         })
         return
     }
 
-    err = utils.DecrementURLCount(userId.(int64), db, ctx)
-    if err != nil {
-        ctx.JSON(http.StatusInternalServerError, gin.H{
-            "message": "Failed to decrement URL count: " + err.Error(),
+    if err := utils.DecrementURLCount(userID.(int64), db, ctx); err != nil {
+        ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+            Message: "Failed to decrement URL count: " + err.Error(),
         })
         return
     }
 
     updatedCount, err := db.NewSelect().
         Model(&models.Tinyurl{}).
-        Where("user_id = ?", userId).
+        Where("user_id = ?", userID).
         Where("is_deleted = ?", false).
         Count(ctx)
+
     if err != nil {
-        ctx.JSON(http.StatusInternalServerError, gin.H{
-            "message": "Failed to fetch updated URL count",
+        ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+            Message: "Failed to fetch updated URL count",
         })
         return
     }
