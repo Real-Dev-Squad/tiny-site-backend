@@ -31,7 +31,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	userID , exists := ctx.Get("userID")
+	userID, exists := ctx.Get("userID")
 	if !exists {
 		ctx.JSON(http.StatusUnauthorized, dtos.URLCreationResponse{
 			Message: "User not authenticated",
@@ -41,12 +41,11 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 
 	var existingOriginalURL models.Tinyurl
 	if err := db.NewSelect().Model(&existingOriginalURL).
-		Where("original_url = ?", body.OriginalUrl).
-		Where("user_id = ? AND is_deleted = ?", userID, false).
+		Where("original_url = ? AND user_id = ? AND is_deleted = ?", body.OriginalUrl, userID, false).
 		Scan(ctx); err == nil {
 		ctx.JSON(http.StatusOK, dtos.URLCreationResponse{
-			Message:  "Shortened URL already exists",
-			ShortURL: existingOriginalURL.ShortUrl,
+			Message:   "Shortened URL already exists",
+			ShortURL:  existingOriginalURL.ShortUrl,
 			CreatedAt: existingOriginalURL.CreatedAt,
 		})
 		return
@@ -225,57 +224,56 @@ func GetAllURLs(ctx *gin.Context, db *bun.DB) {
 }
 
 func DeleteURL(ctx *gin.Context, db *bun.DB) {
-    id, _ := ctx.Params.Get("id")
+	id, _ := ctx.Params.Get("id")
 
-    userID, exists := ctx.Get("userID")
-    if !exists {
-        ctx.JSON(http.StatusUnauthorized, dtos.UserURLsResponse{
-            Message: "User not authenticated",
-        })
-        return
-    }
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, dtos.UserURLsResponse{
+			Message: "User not authenticated",
+		})
+		return
+	}
 
-    _, err := db.NewUpdate().
-        Model(&models.Tinyurl{}).
-        Set("is_deleted=?", true).
-        Set("deleted_at=?", time.Now().UTC()).
-        Where("id = ?", id).
-        Where("user_id = ?", userID).
-        Exec(ctx)
+	_, err := db.NewUpdate().
+		Model(&models.Tinyurl{}).
+		Set("is_deleted=?", true).
+		Set("deleted_at=?", time.Now().UTC()).
+		Where("id = ?", id).
+		Where("user_id = ?", userID).
+		Exec(ctx)
 
-    if err != nil {
-        ctx.JSON(http.StatusNotFound, dtos.UserURLsResponse{
-            Message: "No URLs found",
-        })
-        return
-    }
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, dtos.UserURLsResponse{
+			Message: "No URLs found",
+		})
+		return
+	}
 
-    if err := utils.DecrementURLCount(userID.(int64), db, ctx); err != nil {
-        ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
-            Message: "Failed to decrement URL count: " + err.Error(),
-        })
-        return
-    }
+	if err := utils.DecrementURLCount(userID.(int64), db, ctx); err != nil {
+		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+			Message: "Failed to decrement URL count: " + err.Error(),
+		})
+		return
+	}
 
-    updatedCount, err := db.NewSelect().
-        Model(&models.Tinyurl{}).
-        Where("user_id = ?", userID).
-        Where("is_deleted = ?", false).
-        Count(ctx)
+	updatedCount, err := db.NewSelect().
+		Model(&models.Tinyurl{}).
+		Where("user_id = ?", userID).
+		Where("is_deleted = ?", false).
+		Count(ctx)
 
-    if err != nil {
-        ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
-            Message: "Failed to fetch updated URL count",
-        })
-        return
-    }
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+			Message: "Failed to fetch updated URL count",
+		})
+		return
+	}
 
-    ctx.JSON(http.StatusOK, dtos.URLDeleteResponse{
-        Message:   "URL deleted",
-        URLCount:  updatedCount,
-    })
+	ctx.JSON(http.StatusOK, dtos.URLDeleteResponse{
+		Message:  "URL deleted",
+		URLCount: updatedCount,
+	})
 }
-
 
 func GetURLDetails(ctx *gin.Context, db *bun.DB) {
 	shortURL := ctx.Param("shortURL")
