@@ -3,9 +3,12 @@ package unit
 import (
 	"os"
 	"testing"
+	"time"
 
+	"github.com/Real-Dev-Squad/tiny-site-backend/config"
 	"github.com/Real-Dev-Squad/tiny-site-backend/models"
 	"github.com/Real-Dev-Squad/tiny-site-backend/utils"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func TestMain(m *testing.M) {
@@ -19,6 +22,7 @@ func TestMain(m *testing.M) {
 func TestGenerateJWT(t *testing.T) {
 	dummyUser := &models.User{
 		Email: "test@gmail.com",
+		ID:    123,
 	}
 
 	token, err := utils.GenerateToken(dummyUser)
@@ -36,32 +40,51 @@ func TestVerifyJWT(t *testing.T) {
 	t.Run("ValidToken", func(t *testing.T) {
 		dummyUser := &models.User{
 			Email: "test@gmail.com",
+			ID:    123,
 		}
 
 		validToken, generateTokenError := utils.GenerateToken(dummyUser)
-
 		if generateTokenError != nil {
 			t.Fatalf("Error: %v", generateTokenError)
 		}
 
-		email, validTokenError := utils.VerifyToken(validToken)
-
+		claims, validTokenError := utils.VerifyToken(validToken)
 		if validTokenError != nil {
 			t.Fatalf("Error: %v", validTokenError)
 		}
 
-		if email != dummyUser.Email {
-			t.Fatalf("Expected %v but got %v", dummyUser.Email, email)
+		if claims["email"] != dummyUser.Email {
+			t.Fatalf("Expected email %v but got %v", dummyUser.Email, claims["email"])
+		}
+
+		if claims["userID"] != float64(dummyUser.ID) {
+			t.Fatalf("Expected userID %v but got %v", dummyUser.ID, claims["userID"])
 		}
 	})
 
 	t.Run("ExpiredToken", func(t *testing.T) {
-		expiredToken := "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZ21haWwuY29tIiwiZXhwIjoiMjAyMy0xMC0wMVQxOTo1Njo0OS4zOTc5NzEyWiIsImlzcyI6Indpc2VlLWJhY2tlbmQifQ.h11JtaPg-ITKR8UXTyz_Q7pJU_3gYyXwIkqX7lI1UK2nVkvxQvkyN23-u3wj8fV5mNIvp-ePTOp-7odsPcGC_g"
+		expiredToken := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+			"iss":    config.JwtIssuer,
+			"exp":    time.Now().Add(-time.Hour).Unix(),
+			"email":  "test@gmail.com",
+			"userID": 123,
+		})
 
-		_, expiredTokenError := utils.VerifyToken(expiredToken)
+		key := []byte(config.JwtSecret)
+		expiredTokenString, _ := expiredToken.SignedString(key)
 
-		if expiredTokenError == nil {
-			t.Fatalf("Expected error but got nil")
+		_, expiredTokenError := utils.VerifyToken(expiredTokenString)
+		if expiredTokenError != utils.ErrTokenExpired {
+			t.Fatalf("Expected error %v but got %v", utils.ErrTokenExpired, expiredTokenError)
+		}
+	})
+
+	t.Run("InvalidToken", func(t *testing.T) {
+		invalidToken := "invalid.token.here"
+
+		_, invalidTokenError := utils.VerifyToken(invalidToken)
+		if invalidTokenError == nil {
+			t.Fatalf("Expected an error but got nil")
 		}
 	})
 }
@@ -72,21 +95,24 @@ func TestVerifyJWTForOneYear(t *testing.T) {
 
 	dummyUser := &models.User{
 		Email: "test@gmail.com",
+		ID:    123,
 	}
 
 	validToken, generateTokenError := utils.GenerateToken(dummyUser)
-
 	if generateTokenError != nil {
 		t.Fatalf("Error: %v", generateTokenError)
 	}
 
-	email, validTokenError := utils.VerifyToken(validToken)
-
+	claims, validTokenError := utils.VerifyToken(validToken)
 	if validTokenError != nil {
 		t.Fatalf("Error: %v", validTokenError)
 	}
 
-	if email != dummyUser.Email {
-		t.Fatalf("Expected %v but got %v", dummyUser.Email, email)
+	if claims["email"] != dummyUser.Email {
+		t.Fatalf("Expected email %v but got %v", dummyUser.Email, claims["email"])
+	}
+
+	if claims["userID"] != float64(dummyUser.ID) {
+		t.Fatalf("Expected userID %v but got %v", dummyUser.ID, claims["userID"])
 	}
 }
