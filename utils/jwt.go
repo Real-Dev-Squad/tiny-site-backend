@@ -34,7 +34,11 @@ func GenerateToken(user *models.User) (string, error) {
 func VerifyToken(tokenString string) (jwt.MapClaims, error) {
 	key := []byte(config.JwtSecret)
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	// Parsing the token
+
+	token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+
+		//validatint the algo
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrUnexpectedSigningMethod
 		}
@@ -42,16 +46,16 @@ func VerifyToken(tokenString string) (jwt.MapClaims, error) {
 	})
 
 	if err != nil {
-		if errors.Is(err, jwt.ErrTokenExpired) {
+		if errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet) {
 			return nil, ErrTokenExpired
 		}
 		return nil, err
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || !token.Valid {
-		return nil, ErrInvalidToken
+	// Validating  the token and casting the claims :P
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
 	}
 
-	return claims, nil
+	return nil, ErrInvalidToken
 }
