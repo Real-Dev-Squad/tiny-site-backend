@@ -37,10 +37,6 @@ type URLNotFoundResponse struct {
 	Message string `json:"message"`
 }
 
-type UserListResponse struct {
-	Message string `json:"message"`
-	Data    []User `json:"data,omitempty"`
-}
 type UserResponse struct {
 	Message string `json:"message"`
 	Data    User   `json:"data,omitempty"`
