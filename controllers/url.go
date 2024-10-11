@@ -214,6 +214,9 @@ func GetAllURLs(ctx *gin.Context, db *bun.DB) {
 			CreatedAt:   tinyURL.CreatedAt,
 			ID:          tinyURL.ID,
 			UserID:      tinyURL.UserID,
+			LastAccessedAt: tinyURL.LastAccessedAt,
+			AccessCount: tinyURL.AccessCount,
+			CreatedBy: tinyURL.CreatedBy,
 		})
 	}
 
