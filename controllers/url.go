@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -92,11 +93,39 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
+	
 	if count >= config.UserMaxUrlCount {
 		ctx.JSON(http.StatusForbidden, dtos.URLCreationResponse{
 			Message: "You've reached the limit of " + strconv.Itoa(config.UserMaxUrlCount) + " for URLs. Delete one to add a new one !!",
 		})
 		return
+	}
+	
+	parsedUrl,err := url.Parse(body.OriginalUrl);
+
+	if err != nil {
+		return
+	}
+
+	if strings.Contains(strings.ToLower(parsedUrl.Host),strings.ToLower(config.Domain)) {
+			
+		path :=parsedUrl.Path
+	
+		existingShortUrlCount, err := db.NewSelect().Model(&models.Tinyurl{}).Where("short_url =? AND is_deleted = ?",path[1:],false).Count(ctx)
+	
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
+				Message: "Failed to check existence of short url",
+			})
+			return
+		}
+	
+		if existingShortUrlCount == 1 {
+			ctx.JSON(http.StatusForbidden, dtos.URLCreationResponse{
+				Message: "Cannot create tiny url of the existing tiny url!",
+			})
+			return
+		}
 	}
 
 	newTinyURL := models.Tinyurl{
