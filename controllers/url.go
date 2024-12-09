@@ -111,19 +111,12 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 			
 		path :=parsedUrl.Path
 	
-		existingShortUrlCount, err := db.NewSelect().Model(&models.Tinyurl{}).Where("short_url =? AND is_deleted = ?",path[1:],false).Count(ctx)
-	
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, dtos.URLCreationResponse{
-				Message: "Failed to check existence of short url",
-			})
-			return
-		}
-	
-		if existingShortUrlCount == 1 {
+		if len(path) >=1  {
+
 			ctx.JSON(http.StatusForbidden, dtos.URLCreationResponse{
-				Message: "Cannot create tiny url of the existing tiny url!",
+				Message: "Cannot create tiny url of tiny url!",
 			})
+			
 			return
 		}
 	}
