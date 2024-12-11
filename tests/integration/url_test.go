@@ -247,3 +247,27 @@ func (suite *AppTestSuite) TestGetURLDetailsSuccess() {
 	// Assert the status code is 200 for successful retrieval of URL details
 	assert.Equal(suite.T(), http.StatusOK, w.Code, "Expected status code to be 200 for successful retrieval of URL details")
 }
+
+//TestForbidTinyURLChaining forbids the creation of tiny url of existing tiny url
+func (suite *AppTestSuite) TestForbidTinyURLChaining() {
+
+	router := gin.Default()
+	router.POST("/v1/tinyurl", func(ctx *gin.Context) {
+		controller.CreateTinyURL(ctx, suite.db)
+	})
+
+	requestBody := map[string]interface{}{
+		"OriginalUrl": "https://localhost:8000/abcde",
+		"UserId":      1,
+	}
+
+	requestJSON, _ := json.Marshal(requestBody)
+    req, _ := http.NewRequest("POST", "/v1/tinyurl", bytes.NewBuffer(requestJSON))
+    req.Header.Set("Content-Type", "application/json")
+
+    w := httptest.NewRecorder()
+    router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusForbidden, w.Code, "Expected status code to be 403 for restricting chaining of tiny urls")
+
+}
