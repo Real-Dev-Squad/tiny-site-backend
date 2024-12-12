@@ -251,7 +251,13 @@ func (suite *AppTestSuite) TestGetURLDetailsSuccess() {
 //TestForbidTinyURLChaining forbids the creation of tiny url of existing tiny url
 func (suite *AppTestSuite) TestForbidTinyURLChaining() {
 
-	router := gin.Default()
+	router := gin.Default();
+
+	router.Use(func(ctx *gin.Context) {
+		ctx.Set("userID", int64(1))
+		ctx.Next()
+	})
+
 	router.POST("/v1/tinyurl", func(ctx *gin.Context) {
 		controller.CreateTinyURL(ctx, suite.db)
 	})
