@@ -114,7 +114,7 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		if len(path) >=1  {
 
 			ctx.JSON(http.StatusForbidden, dtos.URLCreationResponse{
-				Message: "Cannot create a tiny url for tiny.realdevsquad.com",
+				Message: "Cannot create a tiny url for " + config.Domain,
 			})
 			
 			return
