@@ -107,7 +107,13 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	if strings.Contains(strings.ToLower(parsedUrl.Host),strings.ToLower(config.Domain)) {
+	parseConfig, errr := url.Parse(config.Domain);
+
+	if errr != nil {
+		return
+	}
+
+	if strings.Contains(strings.ToLower(parsedUrl.Host),strings.ToLower(parseConfig.Host)) {
 			
 		path :=parsedUrl.Path
 	
