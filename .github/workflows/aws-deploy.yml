@@ -69,4 +69,5 @@ jobs:
               -e ALLOWED_ORIGINS=${{vars.ALLOWED_ORIGINS}} \
               -e TOKEN_VALIDITY_IN_SECONDS=${{vars.TOKEN_VALIDITY_IN_SECONDS}} \
               -e USER_MAX_URL_COUNT=${{vars.USER_MAX_URL_COUNT}} \
+              -e WEB_APP_BASE_URL=${{vars.WEB_APP_BASE_URL}} \
               ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
