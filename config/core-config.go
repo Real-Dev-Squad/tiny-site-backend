@@ -26,7 +26,7 @@ var (
 	JwtIssuer            string
 	AllowedOrigin        string
 	Port                 string
-	WebAppBaseDomain     string
+	WebAppBaseUrl     string
 )
 
 func findAndLoadEnv(envFile string) error {
@@ -110,7 +110,7 @@ func loadConfig() {
 	Port = getEnvVar("PORT")
 	JwtValidity = getEnvInt("JWT_VALIDITY_IN_HOURS")
 
-	WebAppBaseDomain = getEnvVar("WEB_APP_BASE_URL")
+	WebAppBaseUrl = getEnvVar("WEB_APP_BASE_URL")
 }
 
 func getEnvVar(key string) string {
