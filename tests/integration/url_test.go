@@ -263,7 +263,7 @@ func (suite *AppTestSuite) TestForbidTinyURLChaining() {
 	})
 
 	requestBody := map[string]interface{}{
-		"OriginalUrl": "https://localhost:8000/abcde",
+		"OriginalUrl": "https://localhost:3000/abcde",
 		"UserId":      1,
 	}
 
