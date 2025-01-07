@@ -107,14 +107,20 @@ func CreateTinyURL(ctx *gin.Context, db *bun.DB) {
 		return
 	}
 
-	if strings.Contains(strings.ToLower(parsedUrl.Host),strings.ToLower(config.Domain)) {
+	parseConfig,err := url.Parse(config.WebAppBaseUrl);
+
+	if err != nil {
+		return;
+	}
+
+	if strings.Contains(strings.ToLower(parsedUrl.Host),strings.ToLower(parseConfig.Host)) {
 			
 		path :=parsedUrl.Path
 	
 		if len(path) >=1  {
 
 			ctx.JSON(http.StatusForbidden, dtos.URLCreationResponse{
-				Message: "Cannot create a tiny url for " + config.Domain,
+				Message: "Cannot create a tiny url for " + config.WebAppBaseUrl,
 			})
 			
 			return
