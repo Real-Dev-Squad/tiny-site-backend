@@ -14,38 +14,16 @@ services:
       target: final
     ports:
       - 4001:4001
+
+# The commented out section below is an example of how to define a PostgreSQL
+# database that your application can use. `depends_on` tells Docker Compose to
+# start the database before your application. The `db-data` volume persists the
+# database data between container restarts. The `db-password` secret is used
+# to set the database password. You must create `db/password.txt` and add
+# a password of your choosing to it before running `docker compose up`.
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USER=tinysite
-      - DB_PASSWORD=tinysite
-      - DB_NAME=tinysite
-      - JWT_SECRET=secret
-      - JWT_ISSUER=tinysite
-      - DOMAIN=localhost
-      - PORT=4001
-      - AUTH_REDIRECT_URL=http://localhost:4001/auth/callback
-      - DB_URL=postgres://tinysite:tinysite@db:5432/tinysite?sslmode=disable
-      - DB_MAX_OPEN_CONNECTIONS=20
-      - GOOGLE_CLIENT_ID=1234567890
-      - GOOGLE_CLIENT_SECRET=1234567890
-      - ALLOWED_ORIGINS=http://localhost:3000
-      - TOKEN_VALIDITY_IN_SECONDS=3600
-      - JWT_VALIDITY_IN_HOURS=1
-      - USER_MAX_URL_COUNT=100
-      - GOOGLE_REDIRECT_URL=http://localhost:4001/auth/callback
-    # The commented out section below is an example of how to define a PostgreSQL
-    # database that your application can use. `depends_on` tells Docker Compose to
-    # start the database before your application. The `db-data` volume persists the
-    # database data between container restarts. The `db-password` secret is used
-    # to set the database password. You must create `db/password.txt` and add
-    # a password of your choosing to it before running `docker compose up`.
-    # depends_on:
-    #   db:
-    #     condition: service_healthy
   db:
     image: postgres
     user: postgres
@@ -67,14 +45,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+  
   adminer:
     image: adminer
     ports:
       - 9091:8080
-
+      
 # volumes:
 #   db-data:
 # secrets:
 #   db-password:
 #     file: db/password.txt
+
