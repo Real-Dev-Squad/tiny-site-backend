@@ -26,7 +26,7 @@ var (
 	JwtIssuer            string
 	AllowedOrigin        string
 	Port                 string
-	WebAppBaseUrl     string
+	WebAppBaseUrl        string
 )
 
 func findAndLoadEnv(envFile string) error {
